@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.14 2004/01/12 09:03:03 laddi Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.15 2004/01/12 09:37:09 laddi Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -60,10 +60,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2004/01/12 09:03:03 $ by $Author: laddi $
+ * Last modified: $Date: 2004/01/12 09:37:09 $ by $Author: laddi $
  *
  * @author Anders Lindman
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -271,7 +271,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			return false;
 		}
 
-		String childName = getUserProperty(this.COLUMN_CHILD_NAME);
+		String childName = getUserProperty(COLUMN_CHILD_NAME);
 		childName = childName == null ? "" : childName;
 		
 		String childFirstName = "";
@@ -284,16 +284,16 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			}
 		}
 
-		String childAddress = getUserProperty(this.COLUMN_ADDRESS);
+		String childAddress = getUserProperty(COLUMN_ADDRESS);
 		childAddress = childAddress == null ? "" : childAddress;
 
-		String childZipCode = getUserProperty(this.COLUMN_ZIP_CODE);
+		String childZipCode = getUserProperty(COLUMN_ZIP_CODE);
 		childZipCode = childZipCode == null ? "" : childZipCode;
 
-		String childZipArea = getUserProperty(this.COLUMN_ZIP_AREA);
+		String childZipArea = getUserProperty(COLUMN_ZIP_AREA);
 		childZipArea = childZipArea == null ? "" : childZipArea;
 
-		String homeCommuneName = getUserProperty(this.COLUMN_COMMUNE);
+		String homeCommuneName = getUserProperty(COLUMN_COMMUNE);
 		homeCommuneName = homeCommuneName == null ? "" : homeCommuneName;
 
 		String afterSchoolType = getUserProperty(COLUMN_AFTER_SCHOOL_TYPE);
