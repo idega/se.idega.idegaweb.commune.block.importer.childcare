@@ -339,7 +339,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
 					iwc.getCurrentLocale(), parent, iwc.getCurrentUser());
 			}
-			report.append("Contract created for child "+child.getName());
+//			report.append("Contract created for child "+child.getName());
 		} catch (UnavailableIWContext e2) {
 			report.append("Could not get the IWContext. Cannot create the contract.");
 			return false;
