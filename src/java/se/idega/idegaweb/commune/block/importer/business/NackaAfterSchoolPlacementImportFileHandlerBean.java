@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.9 2003/11/20 12:36:02 anders Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.10 2003/11/20 14:19:06 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -58,10 +58,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/11/20 12:36:02 $ by $Author: anders $
+ * Last modified: $Date: 2003/11/20 14:19:06 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -322,7 +322,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		if (afterSchoolType.substring(2).equals("rskoleklassomsorg")) {
 			typeKey = "sch_type.school_type_fritids6";
 		} else {
-			typeKey = "sch_type.school_type_fritids7-10";
+			typeKey = "sch_type.school_type_fritids7-9";
 		}
 		
 		try {
@@ -414,7 +414,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 					}
 					
 					if (stKey.equals("sch_type.school_type_fritids6") ||
-							stKey.equals("sch_type.school_type_fritids7-10")) {
+							stKey.equals("sch_type.school_type_fritids7-9")) {
 						if (placement.getRemovedDate() == null) {
 							int scId = placement.getSchoolClassId();
 							if (scId == schoolClassId) {
