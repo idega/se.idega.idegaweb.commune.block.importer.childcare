@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<projectDescription>
+  <name>se.idega.idegaweb.commune.block.importer.childcare</name>
+  <comment>
+  </comment>
+  <projects>
+    <project>com.idega.core</project>
+    <project>com.idega.block.importer</project>
+    <project>com.idega.block.school</project>
+    <project>com.idega.block.process</project>
+    <project>is.idega.block.family</project>
+    <project>se.idega.util</project>
+    <project>se.idega.idegaweb.commune</project>
+    <project>se.idega.idegaweb.commune.care</project>
+    <project>se.idega.idegaweb.commune.childcare</project>
+    <project>se.idega.idegaweb.commune.accounting</project>
+  </projects>
+  <buildSpec>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+      <arguments>
+      </arguments>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
+</projectDescription>
