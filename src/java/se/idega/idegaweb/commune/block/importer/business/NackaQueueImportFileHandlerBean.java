@@ -1,21 +1,32 @@
 package se.idega.idegaweb.commune.block.importer.business;
+import java.io.ByteArrayInputStream;
 import java.rmi.RemoteException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.ejb.CreateException;
 import javax.ejb.FinderException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+
+import se.idega.idegaweb.commune.business.CommuneUserBusiness;
 import se.idega.idegaweb.commune.childcare.data.ChildCareQueue;
 import se.idega.idegaweb.commune.childcare.data.ChildCareQueueHome;
+
 import com.idega.block.importer.business.ImportFileHandler;
 import com.idega.block.importer.data.ImportFile;
 import com.idega.block.school.data.School;
 import com.idega.block.school.data.SchoolHome;
 import com.idega.business.IBOServiceBean;
+import com.idega.core.data.ICFile;
+import com.idega.user.data.Gender;
+import com.idega.user.data.GenderHome;
 import com.idega.user.data.Group;
 import com.idega.user.data.User;
 import com.idega.user.data.UserHome;
+import com.idega.util.DateFormatException;
 import com.idega.util.IWTimestamp;
 import com.idega.util.Timer;
 /**
@@ -36,8 +47,9 @@ public abstract class NackaQueueImportFileHandlerBean
 	private ArrayList queueValues;
 	private ArrayList failedSchools;
 	private ArrayList failedChildren;
+	private ArrayList notFoundChildren;
 	private ArrayList failedRecords = new ArrayList();
-	private int successCount, failCount, count = 0;
+	private int successCount, failCount, alreadyChoosenCount, count = 0;
 	private final int COLUMN_CONTRACT_ID = 0;
 	private final int COLUMN_CHILD_NAME = 1;
 	private final int COLUMN_CHILD_PERSONAL_ID = 2;
@@ -60,6 +72,7 @@ public abstract class NackaQueueImportFileHandlerBean
 	public boolean handleRecords() throws RemoteException {
 		failedSchools = new ArrayList();
 		failedChildren = new ArrayList();
+		notFoundChildren = new ArrayList();
 		transaction = this.getSessionContext().getUserTransaction();
 		Timer clock = new Timer();
 		clock.start();
@@ -82,11 +95,10 @@ public abstract class NackaQueueImportFileHandlerBean
 							+ "] time: "
 							+ IWTimestamp.getTimestampRightNow().toString());
 				}
-				count++;
 				item = null;
 			}
 			printFailedRecords();
-			transaction.commit();
+//			transaction.commit();
 			clock.stop();
 			report.append(
 				"\nNackaQueueHandler processed "
@@ -94,9 +106,27 @@ public abstract class NackaQueueImportFileHandlerBean
 					+ " records successfuly out of "
 					+ count
 					+ "records.\n");
+			report.append(alreadyChoosenCount+" of the selections had already been imported.\n");
 			report.append(
 				"Time to handleRecords: " + clock.getTime() + " ms  OR " + ((int) (clock.getTime() / 1000)) + " s\n");
 			System.out.println("\n**REPORT**\n\n" + report + "\n**END OF REPORT**\n\n");
+			ICFile reportFile;
+			try {
+				reportFile = ((com.idega.core.data.ICFileHome)com.idega.data.IDOLookup.getHomeLegacy(ICFile.class)).createLegacy();
+				byte[] bytes = report.toString().getBytes();
+
+				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+				reportFile.setFileValue(bais);
+				reportFile.setMimeType("text/plain");
+				//Todo joakim have to find the name of the importfile, and add that here.
+				reportFile.setName("test.report");
+				reportFile.setFileSize(report.length());
+				reportFile.insert();
+			}
+			catch (SQLException ex) {
+			  ex.printStackTrace();
+			}
+
 			// System.gc();
 			//success commit changes
 			return true;
@@ -122,14 +152,23 @@ public abstract class NackaQueueImportFileHandlerBean
 	private boolean processRecord(String record) throws RemoteException {
 		queueValues = file.getValuesFromRecordString(record);
 		System.out.println("Nacka queue THE RECORD = " + record);
-		boolean success = storeUserInfo();
-		if (success) {
-			System.out.println("Record processed OK");
-			successCount++;
-		} else {
-			report.append("The problems above comes from the following line in the file:\n" + record + "\n\n");
-			System.out.println("Record could not be stored, please update.");
-			failCount++;
+		boolean success = true;
+		try {
+			success = storeUserInfo();
+			if (success) {
+				System.out.println("Record processed OK");
+				successCount++;
+				count++;
+			} else {
+				report.append("The problems above comes from the following line in the file:\n" + record + "\n\n");
+				System.out.println("Record could not be stored, please update.");
+				failCount++;
+				count++;
+			}
+		} catch (headerException e) {
+			// We don´t really care about the header. Just make sure that it isn´t counted.
+		} catch (alreadyCreatedeException e) {
+			alreadyChoosenCount++;
 		}
 		queueValues = null;
 		return success;
@@ -162,6 +201,14 @@ public abstract class NackaQueueImportFileHandlerBean
 				report.append(name + "\n");
 			}
 		}
+		if (!notFoundChildren.isEmpty()) {
+			report.append("\nChildren missing from database or have different names:\n");
+			Iterator chIterator = notFoundChildren.iterator();
+			while (chIterator.hasNext()) {
+				String name = (String) chIterator.next();
+				report.append(name + "\n");
+			}
+		}
 	}
 	/**
 	 * Stores the info in the current line into persistant bean
@@ -169,7 +216,7 @@ public abstract class NackaQueueImportFileHandlerBean
 	 * @return True if successful otherwise false
 	 * @throws RemoteException
 	 */
-	protected boolean storeUserInfo() throws RemoteException {
+	protected boolean storeUserInfo() throws RemoteException, headerException, alreadyCreatedeException {
 		//variables
 		boolean success = true;
 		try {
@@ -180,8 +227,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				report.append("Failed parsing id number\n");
 				if (count == 0) {
 					report.append("This is probably the header and shouldn't be parsed\n");
-					// TODO (JJ) Should we maybe throw an exception instead, to avoid counting the header?
-					return false;
+					throw new headerException();
 				}
 			}
 			String childName = getQueueProperty(this.COLUMN_CHILD_NAME);
@@ -199,13 +245,36 @@ public abstract class NackaQueueImportFileHandlerBean
 			try {
 				child = uHome.findByPersonalID(childPersonalID);
 			} catch (FinderException e) {
-				report.append("Could not find any child with personal id " + childPersonalID + "\n");
+				report.append("Could not find any child with personal id " + childPersonalID + "  ");
 				report.append("Child name is " + childName + "\n");
-				if (!failedChildren.contains(childName)) {
-					failedChildren.add(childName);
+				//create a temporary user for the child
+				//initialize business beans and data homes
+				CommuneUserBusiness biz;
+				biz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
+				String firstName = null, lastName = null;
+				Gender gender;
+				GenderHome genderHome = (GenderHome) getIDOHome(Gender.class);
+				char genderChar = childPersonalID.charAt(childPersonalID.length()-2);
+				String maleStr = "13579";
+				if(maleStr.indexOf(genderChar)>-1){
+					gender = genderHome.getMaleGender();
+				}else {
+					gender = genderHome.getFemaleGender();
 				}
-				success = false;
-				//				e.printStackTrace();
+				IWTimestamp dateOfBirth = new IWTimestamp();
+				dateOfBirth.setDate(childPersonalID);
+				
+				int com = childName.indexOf(',');
+				if(com > -1){
+					firstName = childName.substring(0,com);
+					lastName = childName.substring(com+1);
+				}
+				
+				child = biz.createSpecialCitizen(firstName, "", lastName, childPersonalID, gender, dateOfBirth);
+				if (!notFoundChildren.contains(childName)) {
+					notFoundChildren.add(childName);
+				}
+//				success = false;
 			}
 			String provider = getQueueProperty(this.COLUMN_PROVIDER_NAME);
 			if (provider == null) {
@@ -223,7 +292,6 @@ public abstract class NackaQueueImportFileHandlerBean
 					failedSchools.add(provider);
 				}
 				success = false;
-				//				e1.printStackTrace();
 			}
 			String prio = getQueueProperty(this.COLUMN_PRIORITY);
 			if (prio == null) {
@@ -236,8 +304,6 @@ public abstract class NackaQueueImportFileHandlerBean
 				report.append("Failed parsing choice number\n");
 				success = false;
 			}
-//			String schoolAreaName = getQueueProperty(this.COLUMN_SCHOOL_AREA);
-			//No check, since we don´t care if this field is empty. This field will probably never be used.
 			String qDate = getQueueProperty(this.COLUMN_QUEUE_DATE);
 			if (qDate == null) {
 				report.append("Failed parsing queue date for " + childName + "\n");
@@ -252,25 +318,23 @@ public abstract class NackaQueueImportFileHandlerBean
 			}
 			IWTimestamp sDateT = new IWTimestamp();
 			sDateT.setDate(sDate);
-			//TODO Add check to see if this line already has been added.
 			// queue
 			if (success) {
+				//Check to see if this line already has been added.
 				ChildCareQueueHome home = (ChildCareQueueHome) getIDOHome(ChildCareQueue.class);
 				try {
 					home.findQueueByChildAndChoiceNumber(child.getID(), choiceNr);
 					report.append("Child and choice already in database "+childName + "\n");
+					throw new alreadyCreatedeException();
 				} catch (FinderException e) {
 					//Only add in instance if a child with this choice isn´t already created
 					ChildCareQueue queueInstance = home.create();
 					queueInstance.setContractId(id);
-					//				q.setChildName(childName);
 					queueInstance.setChildId(child.getID());
 					queueInstance.setProviderName(provider);
 					queueInstance.setProviderId(((Integer) school.getPrimaryKey()).intValue());
 					queueInstance.setPriority(prio);
 					queueInstance.setChoiceNumber(choiceNr);
-//					queueInstance.setSchoolAreaName(schoolAreaName);
-					//				queueInstance.setSchoolAreaId(((Integer) schoolArea.getPrimaryKey()).intValue());
 					queueInstance.setQueueDate(qDateT.getDate());
 					queueInstance.setStartDate(sDateT.getDate());
 					queueInstance.setImportedDate(new IWTimestamp(new java.util.Date().getTime()).getDate());
@@ -280,12 +344,43 @@ public abstract class NackaQueueImportFileHandlerBean
 					queueInstance = null;
 				}
 			}
-		} catch (Exception e) {
+		} catch (RemoteException e) {
+			report.append("There was an error while writing the data to the database\n");
+			e.printStackTrace();
+			success = false;
+		} catch (FinderException e) {
+			report.append("There was an error while writing the data to the database\n");
+			e.printStackTrace();
+			success = false;
+		} catch (DateFormatException e) {
+			report.append("There was an error while writing the data to the database\n");
+			e.printStackTrace();
+			success = false;
+		} catch (CreateException e) {
 			report.append("There was an error while writing the data to the database\n");
 			e.printStackTrace();
 			success = false;
 		}
 		return success;
+	}
+	
+	private class alreadyCreatedeException extends Exception{
+		public alreadyCreatedeException(){
+			super();
+		}
+		
+		public alreadyCreatedeException(String s){
+			super(s);
+		}
+	}
+	private class headerException extends Exception{
+		public headerException(){
+			super();
+		}
+		
+		public headerException(String s){
+			super(s);
+		}
 	}
 	/**
 	 * Sets the file to be used for the import
