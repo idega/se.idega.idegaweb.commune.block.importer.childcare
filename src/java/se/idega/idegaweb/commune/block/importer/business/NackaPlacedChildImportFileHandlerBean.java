@@ -23,10 +23,6 @@ import com.idega.block.school.data.SchoolClassHome;
 import com.idega.block.school.data.SchoolClassMember;
 import com.idega.block.school.data.SchoolClassMemberHome;
 import com.idega.block.school.data.SchoolHome;
-import com.idega.block.school.data.SchoolSeason;
-import com.idega.block.school.data.SchoolSeasonHome;
-import com.idega.block.school.data.SchoolYear;
-import com.idega.block.school.data.SchoolYearHome;
 import com.idega.business.IBOServiceBean;
 import com.idega.idegaweb.UnavailableIWContext;
 import com.idega.presentation.IWContext;
@@ -57,12 +53,9 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private CommuneUserBusiness biz;
 	//private UserHome home;
 	private SchoolBusiness schoolBiz;
-	private SchoolYearHome sYearHome;
-	private SchoolYear year;
 	private SchoolHome sHome;
 	private SchoolClassHome sClassHome;
 	private SchoolClassMemberHome sClassMemberHome;
-	private SchoolSeason season = null;
 	private ImportFile file;
 	private UserTransaction transaction;
 	private ArrayList userValues;
@@ -116,9 +109,6 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			sHome = schoolBiz.getSchoolHome();
 			sClassHome = (SchoolClassHome) this.getIDOHome(SchoolClass.class);
 			sClassMemberHome = (SchoolClassMemberHome) this.getIDOHome(SchoolClassMember.class);
-			sYearHome = schoolBiz.getSchoolYearHome();
-			year = sYearHome.findByYearName("F");
-			season = ((SchoolSeasonHome) this.getIDOHome(SchoolSeason.class)).findByPrimaryKey(new Integer(2));
 			//if the transaction failes all the users and their relations are removed
 			transaction.begin();
 			//iterate through the records and process them
@@ -340,11 +330,11 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		}
 		//school class		
 		try {
-			sClass = sClassHome.findBySchoolClassNameSchoolSchoolYearSchoolSeason(DBV, school, year, season);
+			sClass = sClassHome.findByNameAndSchool(DBV, school);
 //			System.out.println("School cls found");
 		} catch (FinderException e) {
 			report.append("School cls for "+school.getName()+" not found creating...");
-			sClass = schoolBiz.storeSchoolClass(DBV, school, year, season);
+			sClass = schoolBiz.storeSchoolClass(DBV, school, null, null);
 			sClass.store();
 			if (sClass == null){
 				report.append("Could not create the class for "+school.getName());
