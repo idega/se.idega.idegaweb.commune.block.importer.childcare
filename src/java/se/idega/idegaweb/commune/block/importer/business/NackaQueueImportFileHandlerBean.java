@@ -379,7 +379,8 @@ public abstract class NackaQueueImportFileHandlerBean
 				//Check to see if this line already has been added.
 				ChildCareQueueHome home = (ChildCareQueueHome) getIDOHome(ChildCareQueue.class);
 				try {
-					home.findQueueByChildChoiceNumberAndQueueType(((Integer)child.getPrimaryKey()).intValue(), choiceNr, queueType);
+					//home.findQueueByChildChoiceNumberAndQueueType(((Integer)child.getPrimaryKey()).intValue(), choiceNr, queueType);
+					home.findQueueByChildAndChoiceNumberAndProviderID(((Integer)child.getPrimaryKey()).intValue(), choiceNr, ((Integer) school.getPrimaryKey()).intValue());
 //					report.append("Child and choice already in database "+childName + "\n");
 					throw new alreadyCreatedeException();
 				} catch (FinderException e) {
