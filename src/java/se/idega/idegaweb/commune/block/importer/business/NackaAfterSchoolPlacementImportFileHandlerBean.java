@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.16 2004/10/20 18:11:55 thomas Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.17 2004/12/02 12:39:08 laddi Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -61,10 +61,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2004/10/20 18:11:55 $ by $Author: thomas $
+ * Last modified: $Date: 2004/12/02 12:39:08 $ by $Author: laddi $
  *
  * @author Anders Lindman
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -331,13 +331,6 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			errorLog.put(row, "The week hours cannot be empty.");
 			return false;
 		}
-		int hours = 0;
-		try {
-			hours = (int) Float.parseFloat(hoursText);
-		} catch (NumberFormatException e) {
-			errorLog.put(row, "The week hours must be a number.");
-			return false;
-		}		
 
 		// user
 		try {
@@ -515,7 +508,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			try {
 				int schoolTypeId = ((Integer) schoolType.getPrimaryKey()).intValue();
 				importDone = childCareBiz.importChildToProvider(-1, ((Integer) child.getPrimaryKey()).intValue(),
-						schoolId, classId, hours, -1, schoolTypeId, null, placementFrom, placementTo, locale, parent, performer);
+						schoolId, classId, hoursText, -1, schoolTypeId, null, placementFrom, placementTo, locale, parent, performer);
 			} catch (AlreadyCreatedException e) {
 				// The contract already exists (could happen if the imort is run more than one time)
 				importDone = true;
