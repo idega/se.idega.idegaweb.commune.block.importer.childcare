@@ -1,16 +1,15 @@
 package se.idega.idegaweb.commune.block.importer.business;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.ejb.FinderException;
-import javax.ejb.RemoveException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
 import se.idega.idegaweb.commune.business.CommuneUserBusiness;
+import se.idega.idegaweb.commune.childcare.business.ChildCareBusiness;
 import se.idega.util.Report;
 
 import com.idega.block.importer.business.ImportFileHandler;
@@ -27,6 +26,8 @@ import com.idega.block.school.data.SchoolSeasonHome;
 import com.idega.block.school.data.SchoolYear;
 import com.idega.block.school.data.SchoolYearHome;
 import com.idega.business.IBOServiceBean;
+import com.idega.idegaweb.UnavailableIWContext;
+import com.idega.presentation.IWContext;
 import com.idega.user.data.Gender;
 import com.idega.user.data.GenderHome;
 import com.idega.user.data.Group;
@@ -65,19 +66,13 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private ArrayList userValues;
 	private List failedSchools;
 	private List failedRecords;
-	private static final String DBV = "DBV";
+	public static final String DBV = "DBV";		//This is the name of the class/group that is created for the DBV
 
-/* File format	
-	BarnPnr 	BarnNamn 	Enhet	DBV	DBVPnr	Timmar	PlacFrom	PlacTom
-	199207200958	Zetterlund Dahl, Fredrik		Hedström, Camilla	196908300202	15.000000	20011113	20030630
-	199208192709	Ripe, Michaela		Brissman, Eva	195801041129	9.000000	20010813	20030630	
-*/
-	
 	private static final int COLUMN_CHILD_PERSONAL_ID = 0;
 	private static final int COLUMN_CHILD_NAME = 1;
 	private static final int COLUMN_UNIT = 2;
 	private static final int COLUMN_DBV_NAME = 3;
-	private static final int COLUMN_DBV_PERSONAL_ID = 4;
+//	private static final int COLUMN_DBV_PERSONAL_ID = 4;
 	private static final int COLUMN_HOURS = 5;
 	private static final int COLUMN_START_DATE = 6;
 	private static final int COLUMN_END_DATE = 7;
@@ -116,7 +111,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			//if the transaction failes all the users and their relations are removed
 			transaction.begin();
 			//iterate through the records and process them
-//			file.getNextRecord();	//Skip header
+			file.getNextRecord();	//Skip header
 			while (!(item = (String) file.getNextRecord()).equals("")) {
 				count++;
 				if (!processRecord(item))
@@ -181,7 +176,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	public void printFailedRecords() {
 		if(!failedRecords.isEmpty())
 		{
-			report.append("Import failed for these records, please fix and import again:");
+			report.append("\nImport failed for these records, please fix and import again:\n");
 			Iterator iter = failedRecords.iterator();
 			while (iter.hasNext()) {
 				report.append((String) iter.next());
@@ -192,13 +187,13 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			report.append("\nChild caretakers missing from database or have different names:\n");
 			Iterator schools = failedSchools.iterator();
 			while (schools.hasNext()) {
-				report.append((String) schools.next() + "\n");
+				report.append((String) schools.next());
 			}
 		}
 	}
 	
 	protected boolean storeUserInfo() throws RemoteException, headerException {
-		User user = null;
+		User child = null;
 		//variables
 		String caretaker = "";
 		String PIN = getUserProperty(COLUMN_CHILD_PERSONAL_ID);
@@ -210,27 +205,13 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		String childName = getUserProperty(COLUMN_CHILD_NAME);
 		if (childName == null)
 		{
-			report.append("Could not read the personal ID");
+			report.append("Could not read the Child name");
 //			return false;
 		}
 		String unit = getUserProperty(COLUMN_UNIT);
-//		if (unit == null)
-//		{
-//			report.append("Could not read name of the childcaretaker for child "+PIN);
-//			return false;
-//		}
 		String dbv = getUserProperty(COLUMN_DBV_NAME);
-//		if (dbv == null)
-//		{
-//			report.append("Could not read name of the childcaretaker for child "+PIN);
-//			return false;
-//		}
-		String dbvpid = getUserProperty(COLUMN_DBV_PERSONAL_ID);
-//		if (dbvpid == null)
-//		{
-//			report.append("Could not read id of the childcaretaker "+dbv+" for child "+PIN);
-//			return false;
-//		}
+//		String dbvpid = getUserProperty(COLUMN_DBV_PERSONAL_ID);
+
 		if(unit != null){
 			caretaker = unit;
 		} else if(dbv != null){
@@ -242,52 +223,47 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		float hours = getFloatUserProperty(COLUMN_HOURS);
 		String sDate = getUserProperty(COLUMN_START_DATE);
 		if (sDate == null) {
-			report.append("Failed parsing queue date for " + childName + "\n");
+			report.append("Failed parsing start date for " + childName);
 			return false;
 		}
 		IWTimestamp sDateT = new IWTimestamp();
 		try {
 			sDateT.setDate(sDate);
 		} catch (DateFormatException e1) {
-			// TODO JJ What should we do here?
-			e1.printStackTrace();
+			report.append("Failed parsing start date "+sDate+" for " + childName);
+			return false;
 		}
 		String eDate = getUserProperty(COLUMN_END_DATE);
 		IWTimestamp eDateT = new IWTimestamp();
 		if (eDate == null) {
-//			report.append("Failed parsing queue date for " + childName + "\n");
+			// End date can be null, not a problem
 		} else
 		{
 			try {
 				eDateT.setDate(eDate);
 			} catch (DateFormatException e1) {
-				// TODO JJ What should we do here?
-				e1.printStackTrace();
+				// End date can be null, not a problem
 			}
 		}
-		/* File format	
-			BarnPnr 	BarnNamn 	Enhet	DBV	DBVPnr	Timmar	PlacFrom	PlacTom
-			199207200958	Zetterlund Dahl, Fredrik		Hedström, Camilla	196908300202	15.000000	20011113	20030630
-			199208192709	Ripe, Michaela		Brissman, Eva	195801041129	9.000000	20010813	20030630	
-		*/
-		System.out.println("ChP# "+PIN+"  ChName "+childName+"  DBV "+dbv+"  DBV# "+dbvpid+"  Hours "+hours+"  Date "+sDate);
-		if(true)
-			return true;
+
 		//database stuff
-		School school;
+		School school = null;
+		SchoolClass sClass = null;
 //		SchoolYear year;
 		// user
 		try {
-			user = biz.getUserHome().findByPersonalID(PIN);
+			child = biz.getUserHome().findByPersonalID(PIN);
 			//debug
-			if (user == null)
+			if (child == null)
+			{
 				System.out.println(" USER IS NULL!!??? should cast finderexception");
+			}
 		} catch (FinderException e) {
 			report.append("User not found for PIN : " + PIN + " CREATING");
 			System.out.println("User not found for PIN : " + PIN + " CREATING");
 			//create special citizen user by pin
 			try {
-				user = biz.createSpecialCitizenByPersonalIDIfDoesNotExist(
+				child = biz.createSpecialCitizenByPersonalIDIfDoesNotExist(
 						PIN, "", "", PIN, getGenderFromPin(PIN), getBirthDateFromPin(PIN));
 			} catch (Exception ex) {
 				report.append("Could not create the child "+ex.toString());
@@ -295,36 +271,33 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				return false;
 			}
 		}
-		if (!"secret".equals(user.getDescription())) {
-			try {
-				//school
-				//this can only work if there is only one school with this name. add more parameters for other areas
-				school = sHome.findBySchoolName(caretaker);
-			} catch (FinderException e) {
-				report.append("Could not find any childcare taker  with name " + caretaker);
-				if (!failedSchools.contains(caretaker)) {
-					failedSchools.add(caretaker);
-				}
+		try {
+			//school
+			//this can only work if there is only one school with this name. add more parameters for other areas
+			school = sHome.findBySchoolName(caretaker);
+		} catch (FinderException e) {
+			report.append("Could not find any childcare taker  with name " + caretaker);
+			if (!failedSchools.contains(caretaker)) {
+				failedSchools.add(caretaker);
+			}
+			return false;
+		}
+		//school class		
+		try {
+			sClass = sClassHome.findBySchoolClassNameSchoolSchoolYearSchoolSeason(DBV, school, year, season);
+			System.out.println("School cls found");
+		} catch (FinderException e) {
+			report.append("School cls not found creating...");
+			System.out.println("School cls not found creating...");
+			sClass = schoolBiz.storeSchoolClass(DBV, school, year, season);
+			sClass.store();
+			if (sClass == null){
+				report.append("Could not create the class");
 				return false;
 			}
-			//school class		
-			SchoolClass sClass = null;
-			try {
-				sClass = sClassHome.findBySchoolClassNameSchoolSchoolYearSchoolSeason(DBV, school, year, season);
-				System.out.println("School cls found");
-			} catch (FinderException e) {
-				report.append("School cls not found creating...");
-				System.out.println("School cls not found creating...");
-				sClass = schoolBiz.storeSchoolClass(DBV, school, year, season);
-				sClass.store();
-				if (sClass == null)
-				{
-					report.append("Could not create the class");
-					return false;
-				}
-			}
-			//school cls member
-			SchoolClassMember member = null;
+		}
+		//school cls member
+		SchoolClassMember member = null;
 //			try {
 //				Collection classMembers = sClassMemberHome.findByStudent(user);
 //				Iterator oldClasses = classMembers.iterator();
@@ -340,46 +313,35 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 //				}
 //			} catch (FinderException f) {
 //			}
-			report.append("School cls member not found creating...");
-			//System.out.println("School cls member not found creating...");	
-			member = schoolBiz.storeSchoolClassMember(sClass, user);
-			member.store();
-			if (member == null)
-			{
-				report.append("Problem creating the class member");
-				return false;
-			}
-			//schoolclassmember finished
-		} else { //remove secret market person from all schools this season
-			report.append("NackaPlacedStudentImportHandler Removing protected citizen from all classes (pin:"
-			+ user.getPersonalID()+ ")");
-			System.out.println(
-				"NackaPlacedStudentImportHandler Removing protected citizen from all classes (pin:"
-					+ user.getPersonalID()+ ")");
-			try {
-				Collection classMembers = sClassMemberHome.findByStudent(user);
-				Iterator oldClasses = classMembers.iterator();
-				while (oldClasses.hasNext()) {
-					SchoolClassMember temp = (SchoolClassMember) oldClasses.next();
-					try {
-						temp.remove();
-					} catch (RemoveException e) {
-						e.printStackTrace();
-						report.append("NackaPlacedChildImportHandler FAILED Removing protected citizen from all classes (pin:"
-						+ user.getPersonalID()+ ")");
-						System.out.println(
-							"NackaPlacedChildImportHandler FAILED Removing protected citizen from all classes (pin:"
-								+ user.getPersonalID()
-								+ ")");
-						return false;
-					}
-				}
-			} catch (FinderException f) {
-			}
+		report.append("School cls member not found creating...");
+		//System.out.println("School cls member not found creating...");	
+		member = schoolBiz.storeSchoolClassMember(sClass, child);
+		member.store();
+		if (member == null)
+		{
+			report.append("Problem creating the class member");
+			return false;
 		}
-//		importChildToProvider(int childID, int providerID, int groupID, int careTime, IWTimestamp fromDate, IWTimestamp toDate, Locale locale, User parent, User admin)
+		//schoolclassmember finished
+		ChildCareBusiness cc = (ChildCareBusiness) getServiceInstance(ChildCareBusiness.class);
+		User parent = biz.getCustodianForChild(child);
+		IWContext iwc;
+		try {
+			iwc = IWContext.getInstance();
+			int schoolID = Integer.parseInt(school.getPrimaryKey().toString());
+			int classID = Integer.parseInt(sClass.getPrimaryKey().toString());
+			cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
+				iwc.getCurrentLocale(), parent, iwc.getCurrentUser());
+			report.append("Contract created for child "+child.getName());
+		} catch (UnavailableIWContext e2) {
+			report.append("Could not get the IWContext. Cannot create the contract.");
+			return false;
+		} catch (NumberFormatException e3) {
+			report.append("NumberFormatException. SchoolID or ClassID is not a number. Cannot create the contract.");
+			return false;
+		}
 		//finished with this user
-		user = null;
+		child = null;
 		return true;
 	}
 	
