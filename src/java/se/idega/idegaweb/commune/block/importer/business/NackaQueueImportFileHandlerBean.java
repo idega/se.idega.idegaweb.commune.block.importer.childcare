@@ -48,7 +48,7 @@ public abstract class NackaQueueImportFileHandlerBean
 	private ArrayList failedSchools;
 	private ArrayList failedChildren;
 	private ArrayList notFoundChildren;
-	private ArrayList failedRecords = new ArrayList();
+	private ArrayList failedRecords;
 	private int successCount, failCount, alreadyChoosenCount, count = 0;
 	private final int COLUMN_CONTRACT_ID = 0;
 	private final int COLUMN_CHILD_NAME = 1;
@@ -73,6 +73,11 @@ public abstract class NackaQueueImportFileHandlerBean
 		failedSchools = new ArrayList();
 		failedChildren = new ArrayList();
 		notFoundChildren = new ArrayList();
+		failedRecords = new ArrayList();
+		count = 0;
+		failCount = 0;
+		successCount = 0;
+		report = new StringBuffer();
 		transaction = this.getSessionContext().getUserTransaction();
 		Timer clock = new Timer();
 		clock.start();
@@ -81,14 +86,10 @@ public abstract class NackaQueueImportFileHandlerBean
 			transaction.begin();
 			//iterate through the records and process them
 			String item;
-			count = 0;
-			failCount = 0;
-			successCount = 0;
-			report = new StringBuffer();
 			while (!(item = (String) file.getNextRecord()).equals("")) {
 				if (!processRecord(item))
 					failedRecords.add(item);
-				if ((count % 500) == 0) {
+				if ((count % 200) == 0) {
 					System.out.println(
 						"NackaQueueHandler processing RECORD ["
 							+ count
@@ -162,7 +163,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				count++;
 			} else {
 				report.append("The problems above comes from the following line in the file:\n" + record + "\n");
-				System.out.println("Record could not be stored, please update.");
+//				System.out.println("Record could not be stored, please update.");
 				failCount++;
 				count++;
 			}
@@ -324,8 +325,8 @@ public abstract class NackaQueueImportFileHandlerBean
 				//Check to see if this line already has been added.
 				ChildCareQueueHome home = (ChildCareQueueHome) getIDOHome(ChildCareQueue.class);
 				try {
-					home.findQueueByChildAndChoiceNumber(child.getID(), choiceNr);
-					report.append("Child and choice already in database "+childName + "\n");
+					home.findQueueByChildChoiceNumberAndQueueType(child.getID(), choiceNr, queueType);
+//					report.append("Child and choice already in database "+childName + "\n");
 					throw new alreadyCreatedeException();
 				} catch (FinderException e) {
 					//Only add in instance if a child with this choice isn´t already created
