@@ -286,6 +286,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				report.append("Failed parsing personal ID for " + childName + "\n");
 				success = false;
 			}
+			childPersonalID = PIDChecker.getInstance().trim(childPersonalID);
 			UserHome uHome = (UserHome) this.getIDOHome(User.class);
 			User child = null;
 			try {
