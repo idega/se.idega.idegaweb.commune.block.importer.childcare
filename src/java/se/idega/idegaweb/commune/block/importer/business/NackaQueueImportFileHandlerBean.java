@@ -255,6 +255,7 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 			}
 			IWTimestamp sDateT = new IWTimestamp();
 			sDateT.setDate(sDate);
+			//TODO Add check to see if this line already has been added.
 			// queue
 			if(success)
 			{
@@ -271,7 +272,9 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 //				queueInstance.setSchoolAreaId(((Integer) schoolArea.getPrimaryKey()).intValue());
 				queueInstance.setQueueDate(qDateT.getDate());
 				queueInstance.setStartDate(sDateT.getDate());
+				queueInstance.setImportedDate(new IWTimestamp(new java.util.Date().getTime()).getDate());
 				queueInstance.setQueueType(queueType);
+				queueInstance.setExported(false);
 				queueInstance.store();
 				queueInstance = null;
 			}
