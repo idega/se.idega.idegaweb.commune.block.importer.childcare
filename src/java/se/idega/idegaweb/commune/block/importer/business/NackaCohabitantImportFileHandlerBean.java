@@ -1,5 +1,5 @@
 /*
- * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.2 2003/11/07 14:39:34 anders Exp $
+ * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.3 2003/12/18 14:15:02 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -48,10 +48,10 @@ import com.idega.util.Timer;
  * Note that the "12" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/11/07 14:39:34 $ by $Author: anders $
+ * Last modified: $Date: 2003/12/18 14:15:02 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean implements NackaCohabitantImportFileHandler, ImportFileHandler {
 
@@ -182,7 +182,7 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 			System.out.println("\nErrors during import:\n");
 		}
 		Iterator rowIter = errorLog.keySet().iterator();
-		while (iter.hasNext()) {
+		while (rowIter.hasNext()) {
 			Integer row = (Integer) rowIter.next();
 			String message = (String) errorLog.get(row);
 			System.out.println("Line " + row + ": " + message);
@@ -207,10 +207,10 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		}
 
 		String cohabitantPersonalId = getUserProperty(COLUMN_COHABITANT_PERSONAL_ID);
-		if (cohabitantPersonalId == null) {
-			errorLog.put(row, "Cohabitant personal ID cannot be empty.");
-			return false;
-		}
+//		if (cohabitantPersonalId == null) {
+//			errorLog.put(row, "Cohabitant personal ID cannot be empty.");
+//			return false;
+//		}
 		
 		String registerLeaderIncomeString = getUserProperty(COLUMN_REGISTER_LEADER_INCOME);
 		Float registerLeaderIncome = null;
@@ -234,8 +234,8 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		try {
 			cohabitant = communeUserBusiness.getUserHome().findByPersonalID(cohabitantPersonalId);
 		} catch (FinderException e) {
-			errorLog.put(row, "Citizen not found for personal ID: " + cohabitantPersonalId);
-			return false;
+//			errorLog.put(row, "Citizen not found for personal ID: " + cohabitantPersonalId);
+//			return false;
 		}
 		
 		// income
@@ -245,13 +245,15 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		if (registerLeaderIncome != null) {
 			userInfoService.createBruttoIncome(registerLeaderId, registerLeaderIncome, validFrom, creatorId);			
 		}
-		Integer cohabitantId = (Integer) cohabitant.getPrimaryKey();
-		if (cohabitantIncome != null) {
-			userInfoService.createBruttoIncome(cohabitantId, cohabitantIncome, validFrom, creatorId);
+		if (cohabitant != null) {
+			Integer cohabitantId = (Integer) cohabitant.getPrimaryKey();
+			if (cohabitantIncome != null) {
+				userInfoService.createBruttoIncome(cohabitantId, cohabitantIncome, validFrom, creatorId);
+			}
 		}
 		
 		// invoice receiver
-		userInfoService.createInvoiceReceiver(registerLeader);
+//		userInfoService.createInvoiceReceiver(registerLeader);
 		
 		// cohabitant/spouse relation
 		boolean hasSpouse = false;
@@ -261,7 +263,7 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 				hasSpouse = true;
 			}
 		} catch (NoSpouseFound e) {}
-		if (!hasSpouse) {
+		if (!hasSpouse && cohabitant != null) {
 			try {
 				memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);				
 			} catch (CreateException e) {
