@@ -1,0 +1,7 @@
+Note:
+This is a shared folder.
+It is used by two or more bundles.
+Avoid to add classes to this folder.
+If you have to add classes do not forget to
+create symbolic links in the corresponding bundle folder 
+in CVS.
