@@ -237,7 +237,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			Iterator schools = failedSchools.iterator();
 			while (schools.hasNext()) {
 				String name = (String) schools.next();
-				report.append(name + "\n");
+				report.append("'" + name + "'\n");
 			}
 		}
 		if (!failedChildren.isEmpty()) {
