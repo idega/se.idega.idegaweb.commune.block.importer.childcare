@@ -20,9 +20,9 @@ import com.idega.block.importer.data.ImportFile;
 import com.idega.block.school.data.School;
 import com.idega.block.school.data.SchoolHome;
 import com.idega.business.IBOServiceBean;
-import com.idega.core.data.ICFile;
-import com.idega.core.data.ICFileBMPBean;
-import com.idega.core.data.ICFileHome;
+import com.idega.core.file.data.ICFile;
+import com.idega.core.file.data.ICFileBMPBean;
+import com.idega.core.file.data.ICFileHome;
 import com.idega.user.data.Gender;
 import com.idega.user.data.GenderHome;
 import com.idega.user.data.Group;
@@ -141,7 +141,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			
 			ICFile reportFile;
 			try {
-				reportFile = ((com.idega.core.data.ICFileHome)com.idega.data.IDOLookup.getHome(ICFile.class)).create();
+				reportFile = ((com.idega.core.file.data.ICFileHome)com.idega.data.IDOLookup.getHome(ICFile.class)).create();
 				byte[] bytes = report.toString().getBytes();
 
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
