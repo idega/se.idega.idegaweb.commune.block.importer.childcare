@@ -68,6 +68,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private List failedSchools;
 	private List failedRecords;
 	private List notFoundChildren;
+	private List notFoundParent;
 	private Collection childcareTypes;
 	
 	public static final String DBV = "Placerade barn";		//This is the name of the class/group that is created for the DBV
@@ -93,6 +94,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		failedSchools = new ArrayList();
 		failedRecords = new ArrayList();
 		notFoundChildren = new ArrayList();
+		notFoundParent = new ArrayList();
 		transaction = this.getSessionContext().getUserTransaction();
 		report = new Report(file.getFile().getName());	//Create a report file. I will be located in the Report dir
 		//Cero all counters used just for reporting purposes
@@ -199,6 +201,14 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			Iterator chIterator = notFoundChildren.iterator();
 			while (chIterator.hasNext()) {
 				String name = (String) chIterator.next();
+				report.append(name + "\n");
+			}
+		}
+		if (!notFoundParent.isEmpty()) {
+			report.append("\nNo parent found for child:\n");
+			Iterator parents = notFoundParent.iterator();
+			while (parents.hasNext()) {
+				String name = (String) parents.next();
 				report.append(name + "\n");
 			}
 		}
@@ -377,8 +387,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		ChildCareBusiness cc = (ChildCareBusiness) getServiceInstance(ChildCareBusiness.class);
 		User parent = biz.getCustodianForChild(child);
 		if (parent == null) {
-			report.append("No parent found for "+child.getName());
-			return false;
+			notFoundParent.add(PIN + ": " + childName);
 		}
 		
 		IWContext iwc;
