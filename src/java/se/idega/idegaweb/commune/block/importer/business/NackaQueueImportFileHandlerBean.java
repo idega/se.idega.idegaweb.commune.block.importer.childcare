@@ -21,6 +21,8 @@ import com.idega.block.school.data.School;
 import com.idega.block.school.data.SchoolHome;
 import com.idega.business.IBOServiceBean;
 import com.idega.core.data.ICFile;
+import com.idega.core.data.ICFileBMPBean;
+import com.idega.core.data.ICFileHome;
 import com.idega.user.data.Gender;
 import com.idega.user.data.GenderHome;
 import com.idega.user.data.Group;
@@ -88,14 +90,16 @@ public abstract class NackaQueueImportFileHandlerBean
 			//iterate through the records and process them
 			String item;
 			while (!(item = (String) file.getNextRecord()).equals("")) {
-				if (!processRecord(item))
+				if (!processRecord(item)){
 					failedRecords.add(item);
-				if ((count % 200) == 0) {
-					System.out.println(
-						"NackaQueueHandler processing RECORD ["
-							+ count
-							+ "] time: "
-							+ IWTimestamp.getTimestampRightNow().toString());
+				} else {
+					if ((count % 200) == 0) {
+						System.out.println(
+							"NackaQueueHandler processing RECORD ["
+								+ count
+								+ "] time: "
+								+ IWTimestamp.getTimestampRightNow().toString());
+					}
 				}
 				item = null;
 			}
@@ -113,6 +117,28 @@ public abstract class NackaQueueImportFileHandlerBean
 				"Time to handleRecords: " + clock.getTime() + " ms  OR " + ((int) (clock.getTime() / 1000)) + " s\n");
 			System.out.println("\n**REPORT**\n\n" + report + "\n**END OF REPORT**\n\n");
 			//Creating the report file in the DB filesystem.
+			System.out.println("Attempting to access the reports folder");
+			ICFile reportFolder = null;
+			ICFileHome fileHome = (ICFileHome) getIDOHome(ICFile.class);
+			try {
+				reportFolder = fileHome.findByFileName("Reports");
+				System.out.println("Reports folder found");
+			} catch (FinderException e) {
+				System.out.println("Reports folder not found, attempting to create folder");
+				try {
+					ICFile root = fileHome.findByFileName(ICFileBMPBean.IC_ROOT_FOLDER_NAME);
+					System.out.println("Rootfolder found");
+					reportFolder = fileHome.create();
+					reportFolder.setName("Reports");
+					reportFolder.setMimeType("application/vnd.iw-folder");
+					reportFolder.insert();
+					root.addChild(reportFolder);
+					System.out.println("Reports folder created");
+				} catch (FinderException e1) {
+					System.out.println("Error creating Reports folder.");
+				}
+			}
+			
 			ICFile reportFile;
 			try {
 				reportFile = ((com.idega.core.data.ICFileHome)com.idega.data.IDOLookup.getHomeLegacy(ICFile.class)).createLegacy();
@@ -122,9 +148,25 @@ public abstract class NackaQueueImportFileHandlerBean
 				reportFile.setFileValue(bais);
 				reportFile.setMimeType("text/plain");
 				//Todo (jj) Have to find the name of the importfile, and add that here.
-				reportFile.setName("test.report");
+				String filename = file.getFile().getName();
+				int i = filename.indexOf('_');
+				if(i>0)
+				{
+					filename = filename.substring(i+1);
+				}
+				i = filename.lastIndexOf('.');
+				if(i>0)
+				{
+					filename = filename.substring(0,i);
+				}
+				reportFile.setName(filename+".report");
 				reportFile.setFileSize(report.length());
 				reportFile.insert();
+				if(reportFolder!=null)
+				{
+					reportFolder.addChild(reportFile);
+					System.out.println("Report added to folder.");
+				}
 			}
 			catch (SQLException ex) {
 			  ex.printStackTrace();
