@@ -272,7 +272,6 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 				queueInstance.setQueueDate(qDateT.getDate());
 				queueInstance.setStartDate(sDateT.getDate());
 				queueInstance.setQueueType(queueType);
-				System.out.println("about to store the following data: "+queueInstance.toString());
 				queueInstance.store();
 				queueInstance = null;
 			}
