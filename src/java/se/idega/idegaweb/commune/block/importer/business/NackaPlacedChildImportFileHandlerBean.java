@@ -123,7 +123,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			while (!(item = (String) file.getNextRecord()).equals("")) {
 				if (!processRecord(item))
 					failedRecords.add(item);
-				if ((count % 200) == 0) {
+				if ((count % 50) == 0) {
 					System.out.println(
 						"NackaPlacedChildHandler processing RECORD [" + count + "] time: "
 							+ IWTimestamp.getTimestampRightNow().toString());
@@ -388,6 +388,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		User parent = biz.getCustodianForChild(child);
 		if (parent == null) {
 			notFoundParent.add(PIN + ": " + childName);
+			return false;
 		}
 		
 		IWContext iwc;
@@ -395,9 +396,12 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			iwc = IWContext.getInstance();
 			int schoolID = Integer.parseInt(school.getPrimaryKey().toString());
 			int classID = Integer.parseInt(sClass.getPrimaryKey().toString());
-			cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
+			boolean importDone = cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
 				iwc.getCurrentLocale(), parent, iwc.getCurrentUser());
-			report.append("Contract created for child "+child.getName());
+			if (importDone)
+				report.append("Contract created for child "+child.getName());
+			else
+				report.append("Failed to create contract for child "+child.getName());
 		} catch (UnavailableIWContext e2) {
 			report.append("Could not get the IWContext. Cannot create the contract.");
 			return false;
