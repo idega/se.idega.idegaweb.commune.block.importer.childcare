@@ -68,6 +68,8 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private List failedSchools;
 	private List failedRecords;
 	private List notFoundChildren;
+	private Collection childcareTypes;
+	
 	public static final String DBV = "Placerade barn";		//This is the name of the class/group that is created for the DBV
 
 	private static final int COLUMN_CHILD_PERSONAL_ID = 0;
@@ -244,16 +246,12 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			return false;
 		}
 		String eDate = getUserProperty(COLUMN_END_DATE);
-		IWTimestamp eDateT = new IWTimestamp();
+		IWTimestamp eDateT = null;
 		if (eDate == null) {
-			// End date can be null, not a problem
-		} else
-		{
-			try {
-				eDateT.setDate(eDate);
-			} catch (DateFormatException e1) {
-				// End date can be null, not a problem
-			}
+			eDateT = null;
+		}
+		else {
+			eDateT = new IWTimestamp(eDate);
 		}
 
 		//database stuff
@@ -332,15 +330,15 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			}
 		}
 		//school cls member
-		SchoolClassMember member = null;
+		//SchoolClassMember member = null;
 		try {
-			Collection classMembers = sClassMemberHome.findByStudent(child);
+			Collection classMembers = sClassMemberHome.findByStudentAndTypes(((Integer)child.getPrimaryKey()).intValue(), getChildcareTypes());
 			Iterator oldClasses = classMembers.iterator();
 			while (oldClasses.hasNext()) {
 				SchoolClassMember temp = (SchoolClassMember) oldClasses.next();
 				if(!temp.getSchoolClass().getSchoolClassName().equals(DBV))
 				{
-					report.append(child.getName()+" is already in class "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
+					report.append(child.getName()+" is already in childcare "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
 					throw new alreadyCreatedeException();
 				} else {
 					report.append(child.getName()+" is already in childcare "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
@@ -356,13 +354,13 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		} catch (FinderException f) {
 		}
 //		report.append("School cls member not found creating...");
-		member = schoolBiz.storeSchoolClassMember(sClass, child);
+		/*member = schoolBiz.storeSchoolClassMember(sClass, child);
 		member.store();
 		if (member == null)
 		{
 			report.append("Problem creating the class member");
 			return false;
-		}
+		}*/
 		//schoolclassmember finished
 		
 		//Create the contract
@@ -373,14 +371,9 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			iwc = IWContext.getInstance();
 			int schoolID = Integer.parseInt(school.getPrimaryKey().toString());
 			int classID = Integer.parseInt(sClass.getPrimaryKey().toString());
-			// @TODO JJ find out what makes the () fail and remove the if()
-			if(true)
-			{
-				//This function does not seem to work as expected
-				cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
-					iwc.getCurrentLocale(), parent, iwc.getCurrentUser());
-			}
-//			report.append("Contract created for child "+child.getName());
+			cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
+				iwc.getCurrentLocale(), parent, iwc.getCurrentUser());
+			report.append("Contract created for child "+child.getName());
 		} catch (UnavailableIWContext e2) {
 			report.append("Could not get the IWContext. Cannot create the contract.");
 			return false;
@@ -405,6 +398,12 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			val = 0;
 		}
 		return val;
+	}
+	
+	private Collection getChildcareTypes() throws RemoteException {
+		if (childcareTypes == null)
+			childcareTypes = schoolBiz.findAllSchoolTypesForChildCare();
+		return childcareTypes;
 	}
 	
 	private String getUserProperty(int columnIndex) {
