@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.2 2003/10/29 09:24:01 laddi Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.3 2003/10/30 08:51:19 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -58,16 +58,16 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/10/29 09:24:01 $ by $Author: laddi $
+ * Last modified: $Date: 2003/10/30 08:51:19 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
 	private CommuneUserBusiness biz = null;
 	private SchoolBusiness schoolBiz = null;
-	//private ChildCareBusiness childCareBiz = null;
+	private ChildCareBusiness childCareBiz = null;
   
 	private SchoolTypeHome sTypeHome = null;
 	private SchoolHome sHome = null;
@@ -119,7 +119,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			//initialize business beans and data homes
 			biz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
 			schoolBiz = (SchoolBusiness) this.getServiceInstance(SchoolBusiness.class);
-			//childCareBiz = (ChildCareBusiness) getServiceInstance(ChildCareBusiness.class);
+			childCareBiz = (ChildCareBusiness) getServiceInstance(ChildCareBusiness.class);
 			
 			sHome = schoolBiz.getSchoolHome();           
 			sTypeHome = schoolBiz.getSchoolTypeHome();
@@ -415,7 +415,6 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		member.store();
 
 		//Create the contract
-		ChildCareBusiness cc = (ChildCareBusiness) getServiceInstance(ChildCareBusiness.class);
 		User parent = biz.getCustodianForChild(child);
 		if (parent == null) {
 			System.out.println("Parent not found for child with PIN: " + personalId);
@@ -434,7 +433,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			int schoolId = ((Integer) school.getPrimaryKey()).intValue();
 			int classId = ((Integer) schoolClass.getPrimaryKey()).intValue();
 			try {
-				importDone = cc.importChildToProvider(((Integer) child.getPrimaryKey()).intValue(),
+				importDone = childCareBiz.importChildToProvider(((Integer) child.getPrimaryKey()).intValue(),
 						schoolId, classId, hours, placementFrom, placementTo, locale, parent, performer);
 			} catch (AlreadyCreatedException e) {
 				// The contract already exists (could happen if the imort is run more than one time)
