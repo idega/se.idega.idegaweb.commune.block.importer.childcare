@@ -86,7 +86,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	public NackaPlacedChildImportFileHandlerBean() {
 	}
 
-	public boolean handleRecords() throws RemoteException {
+	public boolean handleRecords() {
 		failedSchools = new ArrayList();
 		failedRecords = new ArrayList();
 		notFoundChildren = new ArrayList();
@@ -162,8 +162,6 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				failCount++;
 				count++;
 			}
-		} catch (headerException e) {
-			// We don´t really care about the header. Just make sure that it isn´t counted.
 		} catch (AlreadyCreatedException e) {
 			report.append("The following line will not be imported:\n" + record + "\n");
 			alreadyChoosenCount++;
@@ -207,7 +205,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		}
 	}
 	
-	protected boolean storeUserInfo() throws RemoteException, headerException, AlreadyCreatedException {
+	protected boolean storeUserInfo() throws RemoteException, AlreadyCreatedException {
 		User child = null;
 		//variables
 		String caretaker = "";
@@ -504,7 +502,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		return failedRecords;
 	}
 
-	private class headerException extends Exception{
+	/*private class headerException extends Exception{
 		public headerException(){
 			super();
 		}
@@ -512,5 +510,5 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		public headerException(String s){
 			super(s);
 		}
-	}
+	}*/
 }

@@ -76,7 +76,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
   	
   public NackaCheckImportFileHandlerBean(){}
   
-  public synchronized boolean handleRecords() throws RemoteException{
+  public synchronized boolean handleRecords(){
     transaction =  this.getSessionContext().getUserTransaction();
     
     Timer clock = new Timer();
