@@ -77,6 +77,7 @@ public abstract class NackaQueueImportFileHandlerBean
 		count = 0;
 		failCount = 0;
 		successCount = 0;
+		alreadyChoosenCount = 0;
 		report = new StringBuffer();
 		transaction = this.getSessionContext().getUserTransaction();
 		Timer clock = new Timer();
