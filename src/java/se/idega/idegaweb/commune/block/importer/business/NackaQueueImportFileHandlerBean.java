@@ -30,7 +30,13 @@ import com.idega.util.Timer;
 
 /**
  * <p>Title: NackaQueueImportFileHandlerBean</p>
- * <p>Description: </p>
+ * <p>Description: Imports the child care queue into the database.  
+ * To add this to the "Import handler" dropdown for the import function, execute the following SQL:<br>
+ * insert into im_handler values(3, 'Nacka Childcare queue importer', 
+ * 'se.idega.idegaweb.commune.block.importer.business.NackaQueueImportFileHandlerBean',
+ * 'Imports the Childcare queue in Nacka.')<br>
+ * Note that the "3" value in the SQL might have to be adjusted in the sql, 
+ * depending on the number of records already inserted in the table. </p>
  * <p>Copyright (c) 2002</p>
  * <p>Company: Idega Software</p>
  * @author Joakim Johnson</a>
@@ -229,7 +235,7 @@ public class NackaQueueImportFileHandlerBean
 			try {
 				child = uHome.findByPersonalID(childPersonalID);
 			} catch (FinderException e) {
-				// TODO Auto-generated catch block. Feed this to a result file
+				// TODO Auto-generated catch block. Feed this to a result file Joakim
 				System.out.println("Could not find any child with personal id "+childPersonalID);
 				System.out.println("Child name is "+childName);
 				e.printStackTrace();
@@ -245,7 +251,7 @@ public class NackaQueueImportFileHandlerBean
 			try {
 				school = sHome.findBySchoolName(provider);
 			} catch (FinderException e1) {
-				// TODO Auto-generated catch block. Feed this to a result file
+				// TODO Auto-generated catch block. Feed this to a result file Joakim
 				System.out.println("Could not find any school with name "+provider);
 				e1.printStackTrace();
 				return false;
@@ -266,7 +272,7 @@ public class NackaQueueImportFileHandlerBean
 			try {
 				schoolArea = saHome.findSchoolAreaByAreaName(schoolAreaName);
 			} catch (FinderException e2) {
-				// TODO Auto-generated catch block. Feed this to a result file
+				// TODO Auto-generated catch block. Feed this to a result file Joakim
 				System.out.println("Could not find any School area called "+schoolAreaName);
 				e2.printStackTrace();
 				return false;
@@ -290,10 +296,9 @@ public class NackaQueueImportFileHandlerBean
 			q.setChoiceNumber(choiceNr);
 			q.setSchoolAreaName(schoolAreaName);
 			q.setSchoolAreaId(((Integer)schoolArea.getPrimaryKey()).intValue());
-			//TODO parse the date into a Data object
+			//TODO parse the date into a Data object Joakim
 			q.setQueueDate(t.getDate());
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		}
@@ -362,8 +367,6 @@ public class NackaQueueImportFileHandlerBean
 	 * @see com.idega.block.importer.business.ImportFileHandler#setRootGroup(com.idega.user.data.Group)
 	 */
 	public void setRootGroup(Group rootGroup) throws RemoteException {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
