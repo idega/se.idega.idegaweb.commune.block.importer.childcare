@@ -355,7 +355,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			try {
 				school = sHome.findBySchoolName(provider);
 			} catch (FinderException e1) {
-				report.append("Could not find any school with name " + provider + "\n");
+				report.append("Could not find any school with name '" + provider + "'\n");
 				if (!failedSchools.contains(provider)) {
 					failedSchools.add(provider);
 				}
