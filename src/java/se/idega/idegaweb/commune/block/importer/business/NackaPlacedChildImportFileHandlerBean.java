@@ -415,16 +415,6 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		this.file = file;
 	}
 	
-	private float getFloatUserProperty(int columnIndex){
-		float val;
-		try {
-			val = Float.parseFloat(getUserProperty(columnIndex));
-		} catch (Exception e) {
-			val = 0;
-		}
-		return val;
-	}
-	
 	private Collection getSchoolTypes() throws RemoteException {
 		if (childcareTypes == null)
 			childcareTypes = schoolBiz.findAllSchoolTypesForSchool();
