@@ -298,11 +298,14 @@ public abstract class NackaQueueImportFileHandlerBean
 				child = uHome.findByPersonalID(childPersonalID);
 			} catch (FinderException e) {
 				report.append("Could not find any child with personal id " + childPersonalID + "  ");
-				report.append("Child name is " + childName + "\n");
+				report.append("Child name is " + childName + "    ");
 				String providerTemp=null;
 				providerTemp=getQueueProperty(this.COLUMN_PROVIDER_NAME);
 				if (providerTemp !=null)
 					report.append("Provider is " + providerTemp + "\n");
+				else {
+					report.append("\n");
+				}
 				//create a temporary user for the child
 				//initialize business beans and data homes
 				CommuneUserBusiness biz;
@@ -337,10 +340,15 @@ public abstract class NackaQueueImportFileHandlerBean
 //				success = false;
 			}
 			String provider = getQueueProperty(this.COLUMN_PROVIDER_NAME);
+			
+			
 			if (provider == null) {
 				report.append("Failed parsing provider" + childName + "\n");
 //				System.out.println("Failed parsing provider for " + childName);
 				success = false;
+			}
+			else{
+				provider = provider.trim();
 			}
 			SchoolHome sHome = (SchoolHome) getIDOHome(School.class);
 			School school = null;
