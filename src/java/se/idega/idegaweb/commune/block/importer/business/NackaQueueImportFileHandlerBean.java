@@ -110,6 +110,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			report.append(
 				"Time to handleRecords: " + clock.getTime() + " ms  OR " + ((int) (clock.getTime() / 1000)) + " s\n");
 			System.out.println("\n**REPORT**\n\n" + report + "\n**END OF REPORT**\n\n");
+			//Creating the report file in the DB filesystem.
 			ICFile reportFile;
 			try {
 				reportFile = ((com.idega.core.data.ICFileHome)com.idega.data.IDOLookup.getHomeLegacy(ICFile.class)).createLegacy();
@@ -118,7 +119,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 				reportFile.setFileValue(bais);
 				reportFile.setMimeType("text/plain");
-				//Todo joakim have to find the name of the importfile, and add that here.
+				//Todo (jj) Have to find the name of the importfile, and add that here.
 				reportFile.setName("test.report");
 				reportFile.setFileSize(report.length());
 				reportFile.insert();
@@ -151,16 +152,16 @@ public abstract class NackaQueueImportFileHandlerBean
 	 */
 	private boolean processRecord(String record) throws RemoteException {
 		queueValues = file.getValuesFromRecordString(record);
-		System.out.println("Nacka queue THE RECORD = " + record);
+//		System.out.println("Nacka queue THE RECORD = " + record);
 		boolean success = true;
 		try {
 			success = storeUserInfo();
 			if (success) {
-				System.out.println("Record processed OK");
+//				System.out.println("Record processed OK");
 				successCount++;
 				count++;
 			} else {
-				report.append("The problems above comes from the following line in the file:\n" + record + "\n\n");
+				report.append("The problems above comes from the following line in the file:\n" + record + "\n");
 				System.out.println("Record could not be stored, please update.");
 				failCount++;
 				count++;
@@ -279,7 +280,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			String provider = getQueueProperty(this.COLUMN_PROVIDER_NAME);
 			if (provider == null) {
 				report.append("Failed parsing provider" + childName + "\n");
-				System.out.println("Failed parsing provider for " + childName);
+//				System.out.println("Failed parsing provider for " + childName);
 				success = false;
 			}
 			SchoolHome sHome = (SchoolHome) getIDOHome(School.class);
