@@ -33,7 +33,7 @@ import com.idega.user.data.Gender;
 import com.idega.user.data.GenderHome;
 import com.idega.user.data.Group;
 import com.idega.user.data.User;
-import com.idega.user.data.UserHome;
+//import com.idega.user.data.UserHome;
 import com.idega.util.DateFormatException;
 import com.idega.util.IWTimestamp;
 import com.idega.util.Timer;
@@ -54,7 +54,7 @@ public class NackaPlacedChildImportFileHandlerBean extends IBOServiceBean
 implements ImportFileHandler, NackaPlacedChildImportFileHandler 
 {
 	private CommuneUserBusiness biz;
-	private UserHome home;
+	//private UserHome home;
 	private SchoolBusiness schoolBiz;
 	private SchoolYearHome sYearHome;
 	private SchoolYear year;
@@ -106,7 +106,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		try {
 			//initialize business beans and data homes
 			biz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
-			home = biz.getUserHome();
+			//home = biz.getUserHome();
 			schoolBiz = (SchoolBusiness) this.getServiceInstance(SchoolBusiness.class);
 			sHome = schoolBiz.getSchoolHome();
 			sClassHome = (SchoolClassHome) this.getIDOHome(SchoolClass.class);

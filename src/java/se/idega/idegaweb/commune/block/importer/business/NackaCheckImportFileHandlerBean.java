@@ -15,7 +15,7 @@ import se.idega.idegaweb.commune.childcare.check.business.CheckBusiness;
 import com.idega.block.importer.business.ImportFileHandler;
 import com.idega.block.importer.data.ImportFile;
 import com.idega.block.school.business.SchoolBusiness;
-import com.idega.block.school.data.SchoolHome;
+//import com.idega.block.school.data.SchoolHome;
 import com.idega.block.school.data.SchoolType;
 import com.idega.business.IBOServiceBean;
 import com.idega.user.data.Group;
@@ -42,7 +42,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
   private SchoolBusiness schoolBiz;
   private CheckBusiness checkBiz;
   
-  private SchoolHome sHome;
+  //private SchoolHome sHome;
     
   private ImportFile file;
   private UserTransaction transaction;
@@ -87,7 +87,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
       schoolBiz = (SchoolBusiness) this.getServiceInstance(SchoolBusiness.class);
 			comBiz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
 			checkBiz = (CheckBusiness) this.getServiceInstance(CheckBusiness.class);
-      sHome = schoolBiz.getSchoolHome();
+      //sHome = schoolBiz.getSchoolHome();
 			
 			preSchoolOnly = schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(1));
 			caretakerPreSchool = schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(2));
