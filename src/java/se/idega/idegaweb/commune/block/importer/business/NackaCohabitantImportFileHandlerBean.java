@@ -1,5 +1,5 @@
 /*
- * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.10 2004/01/12 09:03:54 laddi Exp $
+ * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.11 2004/02/02 08:26:29 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -11,6 +11,7 @@
 package se.idega.idegaweb.commune.block.importer.business;
 
 import is.idega.idegaweb.member.business.MemberFamilyLogic;
+import is.idega.idegaweb.member.business.NoCohabitantFound;
 import is.idega.idegaweb.member.business.NoSpouseFound;
 
 import java.rmi.RemoteException;
@@ -25,6 +26,7 @@ import java.util.TreeMap;
 
 import javax.ejb.CreateException;
 import javax.ejb.FinderException;
+import javax.ejb.RemoveException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
@@ -53,10 +55,10 @@ import com.idega.util.Timer;
  * Note that the "12" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2004/01/12 09:03:54 $ by $Author: laddi $
+ * Last modified: $Date: 2004/02/02 08:26:29 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean implements NackaCohabitantImportFileHandler, ImportFileHandler {
 
@@ -277,7 +279,23 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		} catch (NoSpouseFound e) {}
 		if (cohabitant != null) {
 			try {
-				memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);				
+				if (spouse != null && spouse.getPrimaryKey().equals(cohabitant.getPrimaryKey())) {
+					try {
+						User oldCohabitant = memberFamilyLogic.getCohabitantFor(registerLeader);
+						if (oldCohabitant != null && oldCohabitant.getPrimaryKey().equals(cohabitant.getPrimaryKey())) {
+							try {
+								memberFamilyLogic.removeAsCohabitantFor(registerLeader, cohabitant);
+							} catch (RemoveException e) {
+								log(e);
+							}
+						}
+					} catch (NoCohabitantFound e) {
+						log(e);
+					}
+				}
+				if (spouse == null || !spouse.getPrimaryKey().equals(cohabitant.getPrimaryKey())) {
+					memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);									
+				}
 			} catch (CreateException e) {
 				errorLog.put(row, "Cannot create cohabitant relationship for personal Ids: " + registerLeaderPersonalId + ", " + cohabitantPersonalId);
 				return false;
