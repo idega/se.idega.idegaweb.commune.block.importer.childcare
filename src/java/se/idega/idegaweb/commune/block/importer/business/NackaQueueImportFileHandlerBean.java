@@ -44,9 +44,9 @@ public abstract class NackaQueueImportFileHandlerBean
 	private final int COLUMN_PROVIDER_NAME = 3;
 	private final int COLUMN_PRIORITY = 4;
 	private final int COLUMN_CHOICE_NUMBER = 5;
-	private final int COLUMN_SCHOOL_AREA = 6;
-	private final int COLUMN_QUEUE_DATE = 7;
-	private final int COLUMN_START_DATE = 8;
+//	private final int COLUMN_SCHOOL_AREA = 6;
+	private final int COLUMN_QUEUE_DATE = 6;
+	private final int COLUMN_START_DATE = 7;
 	//ID for what type of file is imported. These are the values that will be set in the DB
 	protected final int DBV_WITH_PLACE = 0;
 	protected final int DBV_WITHOUT_PLACE = 1;
@@ -237,7 +237,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				report.append("Failed parsing choice number\n");
 				success = false;
 			}
-			String schoolAreaName = getQueueProperty(this.COLUMN_SCHOOL_AREA);
+//			String schoolAreaName = getQueueProperty(this.COLUMN_SCHOOL_AREA);
 			//No check, since we don´t care if this field is empty. This field will probably never be used.
 			String qDate = getQueueProperty(this.COLUMN_QUEUE_DATE);
 			if (qDate == null) {
@@ -270,7 +270,7 @@ public abstract class NackaQueueImportFileHandlerBean
 					queueInstance.setProviderId(((Integer) school.getPrimaryKey()).intValue());
 					queueInstance.setPriority(prio);
 					queueInstance.setChoiceNumber(choiceNr);
-					queueInstance.setSchoolAreaName(schoolAreaName);
+//					queueInstance.setSchoolAreaName(schoolAreaName);
 					//				queueInstance.setSchoolAreaId(((Integer) schoolArea.getPrimaryKey()).intValue());
 					queueInstance.setQueueDate(qDateT.getDate());
 					queueInstance.setStartDate(sDateT.getDate());
