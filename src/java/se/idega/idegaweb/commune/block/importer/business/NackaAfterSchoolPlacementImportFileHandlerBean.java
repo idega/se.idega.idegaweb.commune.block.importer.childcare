@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.10 2003/11/20 14:19:06 anders Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.11 2003/11/25 14:38:26 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -13,11 +13,11 @@ package se.idega.idegaweb.commune.block.importer.business;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.ejb.FinderException;
 import javax.transaction.SystemException;
@@ -39,6 +39,8 @@ import com.idega.block.school.data.SchoolSeason;
 import com.idega.block.school.data.SchoolType;
 import com.idega.block.school.data.SchoolTypeHome;
 import com.idega.business.IBOServiceBean;
+import com.idega.core.location.data.Commune;
+import com.idega.core.location.data.CommuneHome;
 import com.idega.idegaweb.UnavailableIWContext;
 import com.idega.presentation.IWContext;
 import com.idega.user.data.Group;
@@ -58,10 +60,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/11/20 14:19:06 $ by $Author: anders $
+ * Last modified: $Date: 2003/11/25 14:38:26 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -73,6 +75,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 	private SchoolHome sHome = null;
 	private SchoolClassHome sClassHome = null;
 	private SchoolClassMemberHome sClassMemberHome = null;
+	private CommuneHome communeHome = null;
 
 	private SchoolSeason season = null;
     
@@ -88,11 +91,11 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 	private Locale locale = null;
 		
 	private final static int COLUMN_PERSONAL_ID = 0;  
-//	private final static int COLUMN_CHILD_NAME = 1;  
-//	private final static int COLUMN_ADDRESS = 2;  
-//	private final static int COLUMN_ZIP_CODE = 3;  
-//	private final static int COLUMN_ZIP_AREA = 4;  
-//	private final static int COLUMN_COMMUNE = 5;  
+	private final static int COLUMN_CHILD_NAME = 1;  
+	private final static int COLUMN_ADDRESS = 2;  
+	private final static int COLUMN_ZIP_CODE = 3;  
+	private final static int COLUMN_ZIP_AREA = 4;  
+	private final static int COLUMN_COMMUNE = 5;  
 	private final static int COLUMN_PROVIDER_NAME = 6;  
 	private final static int COLUMN_AFTER_SCHOOL_TYPE = 7;  
 	private final static int COLUMN_PLACEMENT_FROM_DATE = 8;  
@@ -127,6 +130,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			sTypeHome = schoolBiz.getSchoolTypeHome();
 			sClassHome = (SchoolClassHome) this.getIDOHome(SchoolClass.class);
 			sClassMemberHome = (SchoolClassMemberHome) this.getIDOHome(SchoolClassMember.class);
+			communeHome = (CommuneHome) this.getIDOHome(Commune.class);
 
 			try {
 				season = schoolBiz.getCurrentSchoolSeason();    	
@@ -267,6 +271,31 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			return false;
 		}
 
+		String childName = getUserProperty(this.COLUMN_CHILD_NAME);
+		childName = childName == null ? "" : childName;
+		
+		String childFirstName = "";
+		String childLastName = "";		
+		if (childName.length() > 0) {
+			int cutPos = childName.indexOf(',');
+			if (cutPos != -1) {
+				childFirstName = childName.substring(cutPos + 1).trim();
+				childLastName = childName.substring(0, cutPos).trim(); 
+			}
+		}
+
+		String childAddress = getUserProperty(this.COLUMN_ADDRESS);
+		childAddress = childAddress == null ? "" : childAddress;
+
+		String childZipCode = getUserProperty(this.COLUMN_ZIP_CODE);
+		childZipCode = childZipCode == null ? "" : childZipCode;
+
+		String childZipArea = getUserProperty(this.COLUMN_ZIP_AREA);
+		childZipArea = childZipArea == null ? "" : childZipArea;
+
+		String homeCommuneName = getUserProperty(this.COLUMN_COMMUNE);
+		homeCommuneName = homeCommuneName == null ? "" : homeCommuneName;
+
 		String afterSchoolType = getUserProperty(COLUMN_AFTER_SCHOOL_TYPE);
 		if (afterSchoolType == null) {
 			errorLog.put(row, "Provider type cannot be empty.");
@@ -315,6 +344,22 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		} catch (FinderException e) {
 			errorLog.put(row, "Child not found for PIN: " + personalId);
 			return false;
+		}
+
+		if (child.getFirstName().equals(child.getPersonalID())) {
+			child.setFirstName(childFirstName);
+			child.setLastName(childLastName);
+
+			try {
+				Commune homeCommune = communeHome.findByCommuneName(homeCommuneName);
+				Integer communeId = (Integer) homeCommune.getPrimaryKey();
+				biz.updateCitizenAddress(((Integer) child.getPrimaryKey()).intValue(), childAddress, childZipCode, childZipArea, communeId);
+			} catch (FinderException e) {
+				errorLog.put(row, "Commune not found: " + homeCommuneName);
+				return false;
+			}
+			
+			child.store();
 		}
 		
 		// school type
