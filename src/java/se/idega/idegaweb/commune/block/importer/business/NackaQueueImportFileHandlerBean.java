@@ -71,7 +71,7 @@ public abstract class NackaQueueImportFileHandlerBean
 	private StringBuffer report;
 	public NackaQueueImportFileHandlerBean() {
 	}
-	public boolean handleRecords() throws RemoteException {
+	public boolean handleRecords() {
 		failedSchools = new ArrayList();
 		failedChildren = new ArrayList();
 		notFoundChildren = new ArrayList();
@@ -194,7 +194,7 @@ public abstract class NackaQueueImportFileHandlerBean
 	 * @return true if the record was parsed and stored OK, otherwise false
 	 * @throws RemoteException
 	 */
-	private boolean processRecord(String record) throws RemoteException {
+	private boolean processRecord(String record) {
 		queueValues = file.getValuesFromRecordString(record);
 //		System.out.println("Nacka queue THE RECORD = " + record);
 		boolean success = true;
@@ -261,7 +261,7 @@ public abstract class NackaQueueImportFileHandlerBean
 	 * @return True if successful otherwise false
 	 * @throws RemoteException
 	 */
-	protected boolean storeUserInfo() throws RemoteException, headerException, alreadyCreatedeException {
+	protected boolean storeUserInfo() throws headerException, alreadyCreatedeException {
 		//variables
 		boolean success = true;
 		try {
@@ -475,6 +475,6 @@ public abstract class NackaQueueImportFileHandlerBean
 	/**
 	 * @see com.idega.block.importer.business.ImportFileHandler#setRootGroup(com.idega.user.data.Group)
 	 */
-	public void setRootGroup(Group rootGroup) throws RemoteException {
+	public void setRootGroup(Group rootGroup) {
 	}
 }
