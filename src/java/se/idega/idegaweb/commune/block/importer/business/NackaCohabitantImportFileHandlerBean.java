@@ -1,5 +1,5 @@
 /*
- * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.12 2004/02/10 12:56:53 laddi Exp $
+ * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.13 2004/08/27 16:12:54 joakim Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -10,7 +10,7 @@
 
 package se.idega.idegaweb.commune.block.importer.business;
 
-import is.idega.idegaweb.member.business.MemberFamilyLogic;
+import is.idega.block.family.business.FamilyLogic;
 import is.idega.idegaweb.member.business.NoCohabitantFound;
 import is.idega.idegaweb.member.business.NoSpouseFound;
 
@@ -55,16 +55,16 @@ import com.idega.util.Timer;
  * Note that the "12" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2004/02/10 12:56:53 $ by $Author: laddi $
+ * Last modified: $Date: 2004/08/27 16:12:54 $ by $Author: joakim $
  *
  * @author Anders Lindman
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean implements NackaCohabitantImportFileHandler, ImportFileHandler {
 
 	private CommuneUserBusiness communeUserBusiness = null;
 	private ChildCareBusiness childCareBusiness = null;
-	private MemberFamilyLogic memberFamilyLogic = null;
+	private FamilyLogic memberFamilyLogic = null;
 	private UserInfoService userInfoService = null;
     
 	private ImportFile file;
@@ -103,7 +103,7 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 			// initialize business beans
 			communeUserBusiness = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
 			childCareBusiness = (ChildCareBusiness) this.getServiceInstance(ChildCareBusiness.class);
-			memberFamilyLogic = (MemberFamilyLogic) this.getServiceInstance(MemberFamilyLogic.class);
+			memberFamilyLogic = (FamilyLogic) this.getServiceInstance(FamilyLogic.class);
 			userInfoService = (UserInfoService) this.getServiceInstance(UserInfoService.class);
             		
 			transaction.begin();
