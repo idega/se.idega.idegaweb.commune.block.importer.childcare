@@ -3,14 +3,11 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import javax.ejb.FinderException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-
 import se.idega.idegaweb.commune.childcare.data.ChildCareQueue;
 import se.idega.idegaweb.commune.childcare.data.ChildCareQueueHome;
-
 import com.idega.block.importer.business.ImportFileHandler;
 import com.idega.block.importer.data.ImportFile;
 import com.idega.block.school.data.School;
@@ -31,7 +28,8 @@ import com.idega.util.Timer;
  * @author Joakim Johnson</a>
  * @version 1.0
  */
-public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
+public abstract class NackaQueueImportFileHandlerBean
+	extends IBOServiceBean
 	implements NackaQueueImportFileHandler, ImportFileHandler {
 	private ImportFile file;
 	private UserTransaction transaction;
@@ -78,8 +76,11 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 				if (!processRecord(item))
 					failedRecords.add(item);
 				if ((count % 500) == 0) {
-					System.out.println("NackaQueueHandler processing RECORD ["
-						+ count + "] time: " + IWTimestamp.getTimestampRightNow().toString());
+					System.out.println(
+						"NackaQueueHandler processing RECORD ["
+							+ count
+							+ "] time: "
+							+ IWTimestamp.getTimestampRightNow().toString());
 				}
 				count++;
 				item = null;
@@ -88,24 +89,27 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 			transaction.commit();
 			clock.stop();
 			report.append(
-				"\nNackaQueueHandler processed " + successCount + 
-				" records successfuly out of " + count + "records.\n");
+				"\nNackaQueueHandler processed "
+					+ successCount
+					+ " records successfuly out of "
+					+ count
+					+ "records.\n");
 			report.append(
-				"Time to handleRecords: " + clock.getTime() + 
-				" ms  OR " + ((int) (clock.getTime() / 1000)) + " s\n");
-			System.out.println("\n**REPORT**\n\n"+report+"\n**END OF REPORT**\n\n");
+				"Time to handleRecords: " + clock.getTime() + " ms  OR " + ((int) (clock.getTime() / 1000)) + " s\n");
+			System.out.println("\n**REPORT**\n\n" + report + "\n**END OF REPORT**\n\n");
 			// System.gc();
 			//success commit changes
 			return true;
 		} catch (Exception ex) {
-			report.append("\nThe parsing of the file caused and error. Please veryfy that the file has correct format.");
+			report.append(
+				"\nThe parsing of the file caused and error. Please veryfy that the file has correct format.");
 			ex.printStackTrace();
 			try {
 				transaction.rollback();
 			} catch (SystemException e) {
 				e.printStackTrace();
 			}
-			System.out.println("\n**REPORT**\n\n"+report+"\n**END OF REPORT**\n\n");
+			System.out.println("\n**REPORT**\n\n" + report + "\n**END OF REPORT**\n\n");
 			return false;
 		}
 	}
@@ -123,7 +127,7 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 			System.out.println("Record processed OK");
 			successCount++;
 		} else {
-			report.append("The problems above comes from the following line in the file:\n"+record+"\n\n");
+			report.append("The problems above comes from the following line in the file:\n" + record + "\n\n");
 			System.out.println("Record could not be stored, please update.");
 			failCount++;
 		}
@@ -135,27 +139,27 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 	 * and all schools that couldn´t be found in the db
 	 */
 	public void printFailedRecords() {
-		if(!failedRecords.isEmpty()){
+		if (!failedRecords.isEmpty()) {
 			report.append("\nImport failed for these records, please fix and import again:\n");
 			Iterator iter = failedRecords.iterator();
 			while (iter.hasNext()) {
-				report.append((String) iter.next()+"\n");
+				report.append((String) iter.next() + "\n");
 			}
 		}
-		if(!failedSchools.isEmpty()){
+		if (!failedSchools.isEmpty()) {
 			report.append("\nSchools missing from database or have different names:\n");
 			Iterator schools = failedSchools.iterator();
 			while (schools.hasNext()) {
 				String name = (String) schools.next();
-				report.append(name+"\n");
+				report.append(name + "\n");
 			}
 		}
-		if(!failedChildren.isEmpty()){
+		if (!failedChildren.isEmpty()) {
 			report.append("\nChildren missing from database or have different names:\n");
 			Iterator chIterator = failedChildren.iterator();
 			while (chIterator.hasNext()) {
 				String name = (String) chIterator.next();
-				report.append(name+"\n");
+				report.append(name + "\n");
 			}
 		}
 	}
@@ -174,22 +178,20 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 				id = getIntQueueProperty(this.COLUMN_CONTRACT_ID);
 			} catch (NumberFormatException e) {
 				report.append("Failed parsing id number\n");
-				if(count == 0){
+				if (count == 0) {
 					report.append("This is probably the header and shouldn't be parsed\n");
 					// TODO (JJ) Should we maybe throw an exception instead, to avoid counting the header?
 					return false;
 				}
 			}
 			String childName = getQueueProperty(this.COLUMN_CHILD_NAME);
-			if (childName == null)
-			{
-				report.append("Failed parsing name for line " + id +"\n");
+			if (childName == null) {
+				report.append("Failed parsing name for line " + id + "\n");
 				success = false;
 			}
 			String childPersonalID = getQueueProperty(this.COLUMN_CHILD_PERSONAL_ID);
-			if (childPersonalID == null)
-			{
-				report.append("Failed parsing personal ID for " + childName +"\n");
+			if (childPersonalID == null) {
+				report.append("Failed parsing personal ID for " + childName + "\n");
 				success = false;
 			}
 			UserHome uHome = (UserHome) this.getIDOHome(User.class);
@@ -197,8 +199,8 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 			try {
 				child = uHome.findByPersonalID(childPersonalID);
 			} catch (FinderException e) {
-				report.append("Could not find any child with personal id " + childPersonalID +"\n");
-				report.append("Child name is " + childName +"\n");
+				report.append("Could not find any child with personal id " + childPersonalID + "\n");
+				report.append("Child name is " + childName + "\n");
 				if (!failedChildren.contains(childName)) {
 					failedChildren.add(childName);
 				}
@@ -206,9 +208,8 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 				//				e.printStackTrace();
 			}
 			String provider = getQueueProperty(this.COLUMN_PROVIDER_NAME);
-			if (provider == null)
-			{
-				report.append("Failed parsing provider" + childName +"\n");
+			if (provider == null) {
+				report.append("Failed parsing provider" + childName + "\n");
 				System.out.println("Failed parsing provider for " + childName);
 				success = false;
 			}
@@ -217,17 +218,16 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 			try {
 				school = sHome.findBySchoolName(provider);
 			} catch (FinderException e1) {
-				report.append("Could not find any school with name " + provider +"\n");
+				report.append("Could not find any school with name " + provider + "\n");
 				if (!failedSchools.contains(provider)) {
 					failedSchools.add(provider);
 				}
 				success = false;
-//				e1.printStackTrace();
+				//				e1.printStackTrace();
 			}
 			String prio = getQueueProperty(this.COLUMN_PRIORITY);
-			if (prio == null)
-			{
-				report.append("Failed parsing priority for " + childName +"\n");
+			if (prio == null) {
+				report.append("Failed parsing priority for " + childName + "\n");
 				success = false;
 			}
 			int choiceNr = 0;
@@ -240,43 +240,46 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 			String schoolAreaName = getQueueProperty(this.COLUMN_SCHOOL_AREA);
 			//No check, since we don´t care if this field is empty. This field will probably never be used.
 			String qDate = getQueueProperty(this.COLUMN_QUEUE_DATE);
-			if (qDate == null)
-			{
-				report.append("Failed parsing queue date for " + childName +"\n");
+			if (qDate == null) {
+				report.append("Failed parsing queue date for " + childName + "\n");
 				success = false;
 			}
 			IWTimestamp qDateT = new IWTimestamp();
 			qDateT.setDate(qDate);
 			String sDate = getQueueProperty(this.COLUMN_START_DATE);
-			if (sDate == null)
-			{
-				report.append("Failed parsing start date " + childName +"\n");
+			if (sDate == null) {
+				report.append("Failed parsing start date " + childName + "\n");
 				success = false;
 			}
 			IWTimestamp sDateT = new IWTimestamp();
 			sDateT.setDate(sDate);
 			//TODO Add check to see if this line already has been added.
 			// queue
-			if(success)
-			{
+			if (success) {
 				ChildCareQueueHome home = (ChildCareQueueHome) getIDOHome(ChildCareQueue.class);
-				ChildCareQueue queueInstance = home.create();
-				queueInstance.setContractId(id);
-//				q.setChildName(childName);
-				queueInstance.setChildId(child.getID());
-				queueInstance.setProviderName(provider);
-				queueInstance.setProviderId(((Integer) school.getPrimaryKey()).intValue());
-				queueInstance.setPriority(prio);
-				queueInstance.setChoiceNumber(choiceNr);
-				queueInstance.setSchoolAreaName(schoolAreaName);
-//				queueInstance.setSchoolAreaId(((Integer) schoolArea.getPrimaryKey()).intValue());
-				queueInstance.setQueueDate(qDateT.getDate());
-				queueInstance.setStartDate(sDateT.getDate());
-				queueInstance.setImportedDate(new IWTimestamp(new java.util.Date().getTime()).getDate());
-				queueInstance.setQueueType(queueType);
-				queueInstance.setExported(false);
-				queueInstance.store();
-				queueInstance = null;
+				try {
+					home.findQueueByChildAndChoiceNumber(child.getID(), choiceNr);
+					report.append("Child and choice already in database "+childName + "\n");
+				} catch (FinderException e) {
+					//Only add in instance if a child with this choice isn´t already created
+					ChildCareQueue queueInstance = home.create();
+					queueInstance.setContractId(id);
+					//				q.setChildName(childName);
+					queueInstance.setChildId(child.getID());
+					queueInstance.setProviderName(provider);
+					queueInstance.setProviderId(((Integer) school.getPrimaryKey()).intValue());
+					queueInstance.setPriority(prio);
+					queueInstance.setChoiceNumber(choiceNr);
+					queueInstance.setSchoolAreaName(schoolAreaName);
+					//				queueInstance.setSchoolAreaId(((Integer) schoolArea.getPrimaryKey()).intValue());
+					queueInstance.setQueueDate(qDateT.getDate());
+					queueInstance.setStartDate(sDateT.getDate());
+					queueInstance.setImportedDate(new IWTimestamp(new java.util.Date().getTime()).getDate());
+					queueInstance.setQueueType(queueType);
+					queueInstance.setExported(false);
+					queueInstance.store();
+					queueInstance = null;
+				}
 			}
 		} catch (Exception e) {
 			report.append("There was an error while writing the data to the database\n");
@@ -297,7 +300,7 @@ public abstract class NackaQueueImportFileHandlerBean extends IBOServiceBean
 	 * @param columnIndex column to be parsed
 	 * @return int value of the column. 0 is returned, if no value or unparsable value is found.
 	 */
-	private int getIntQueueProperty(int columnIndex) throws NumberFormatException{
+	private int getIntQueueProperty(int columnIndex) throws NumberFormatException {
 		String sValue = getQueueProperty(columnIndex);
 		return Integer.parseInt(sValue);
 	}
