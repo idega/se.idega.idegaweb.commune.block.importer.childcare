@@ -363,6 +363,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			} catch (NumberFormatException e) {
 				report.append("Failed parsing choice number\n");
 				success = false;
+				choiceNr = 1;
 			}
 			String qDate = getQueueProperty(this.COLUMN_QUEUE_DATE);
 			if (qDate == null) {
