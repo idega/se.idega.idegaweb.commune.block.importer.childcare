@@ -269,8 +269,8 @@ public abstract class NackaQueueImportFileHandlerBean
 				
 				int com = childName.indexOf(',');
 				if(com > -1){
-					firstName = childName.substring(0,com);
-					lastName = childName.substring(com+1);
+					lastName = childName.substring(0,com);
+					firstName = childName.substring(com+1);
 				}
 				
 				child = biz.createSpecialCitizen(firstName, "", lastName, childPersonalID, gender, dateOfBirth);
