@@ -68,7 +68,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private List failedSchools;
 	private List failedRecords;
 	private List notFoundChildren;
-	public static final String DBV = "DBV";		//This is the name of the class/group that is created for the DBV
+	public static final String DBV = "Placerade barn";		//This is the name of the class/group that is created for the DBV
 
 	private static final int COLUMN_CHILD_PERSONAL_ID = 0;
 	private static final int COLUMN_CHILD_NAME = 1;
@@ -266,7 +266,8 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			//debug
 			if (child == null)
 			{
-				System.out.println(" USER IS NULL!!??? should cast finderexception");
+				report.append("Could not find child with personal id "+PIN+" in database");
+				return false;
 			}
 		} catch (FinderException e) {
 			try {
@@ -291,8 +292,8 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				
 				int com = childName.indexOf(',');
 				if(com > -1){
-					lastName = childName.substring(0,com);
-					firstName = childName.substring(com+1);
+					lastName = childName.substring(0,com).trim();
+					firstName = childName.substring(com+1).trim();
 				}
 				
 				child = biz.createSpecialCitizen(firstName, "", lastName, PIN, gender, dateOfBirth);
@@ -373,7 +374,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			int schoolID = Integer.parseInt(school.getPrimaryKey().toString());
 			int classID = Integer.parseInt(sClass.getPrimaryKey().toString());
 			// @TODO JJ find out what makes the () fail and remove the if()
-			if(false)
+			if(true)
 			{
 				//This function does not seem to work as expected
 				cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
