@@ -376,6 +376,11 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		//Create the contract
 		ChildCareBusiness cc = (ChildCareBusiness) getServiceInstance(ChildCareBusiness.class);
 		User parent = biz.getCustodianForChild(child);
+		if (parent == null) {
+			report.append("No parent found for "+child.getName());
+			return false;
+		}
+		
 		IWContext iwc;
 		try {
 			iwc = IWContext.getInstance();
