@@ -1,5 +1,5 @@
 /*
- * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.7 2003/12/24 10:55:34 anders Exp $
+ * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.8 2004/01/07 10:15:48 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -17,6 +17,7 @@ import java.rmi.RemoteException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +30,13 @@ import javax.transaction.UserTransaction;
 
 import se.idega.idegaweb.commune.accounting.userinfo.business.UserInfoService;
 import se.idega.idegaweb.commune.business.CommuneUserBusiness;
+import se.idega.idegaweb.commune.childcare.business.ChildCareBusiness;
+import se.idega.idegaweb.commune.childcare.data.ChildCareContract;
 
 import com.idega.block.importer.business.ImportFileHandler;
 import com.idega.block.importer.data.ImportFile;
 import com.idega.business.IBOServiceBean;
+import com.idega.core.location.data.Address;
 import com.idega.user.data.Group;
 import com.idega.user.data.User;
 import com.idega.util.IWTimestamp;
@@ -49,14 +53,15 @@ import com.idega.util.Timer;
  * Note that the "12" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/12/24 10:55:34 $ by $Author: anders $
+ * Last modified: $Date: 2004/01/07 10:15:48 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean implements NackaCohabitantImportFileHandler, ImportFileHandler {
 
 	private CommuneUserBusiness communeUserBusiness = null;
+	private ChildCareBusiness childCareBusiness = null;
 	private MemberFamilyLogic memberFamilyLogic = null;
 	private UserInfoService userInfoService = null;
     
@@ -95,6 +100,7 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		try {
 			// initialize business beans
 			communeUserBusiness = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
+			childCareBusiness = (ChildCareBusiness) this.getServiceInstance(ChildCareBusiness.class);
 			memberFamilyLogic = (MemberFamilyLogic) this.getServiceInstance(MemberFamilyLogic.class);
 			userInfoService = (UserInfoService) this.getServiceInstance(UserInfoService.class);
             		
@@ -265,14 +271,11 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 //		userInfoService.createInvoiceReceiver(registerLeader);
 		
 		// cohabitant/spouse relation
-		boolean hasSpouse = false;
+		User spouse = null;
 		try {
-			User spouse = memberFamilyLogic.getSpouseFor(registerLeader);
-			if (spouse != null) {
-				hasSpouse = true;
-			}
+			spouse = memberFamilyLogic.getSpouseFor(registerLeader);
 		} catch (NoSpouseFound e) {}
-		if (!hasSpouse && cohabitant != null) {
+		if (cohabitant != null) {
 			try {
 				memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);				
 			} catch (CreateException e) {
@@ -281,6 +284,52 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 			}
 		}
 		
+		Collection registerLeaderChildren = null;
+		Collection spouseChildren = null;
+		Collection cohabitantChildren = null;
+		Collection children = new ArrayList();
+		try {
+			registerLeaderChildren = memberFamilyLogic.getChildrenFor(registerLeader);
+			if (registerLeaderChildren != null) {
+				children.addAll(registerLeaderChildren);
+			}
+		} catch (Exception e) {}
+		try {
+			if (spouse != null) {
+				spouseChildren = memberFamilyLogic.getChildrenFor(spouse);
+			}
+			if (spouseChildren != null) {
+				children.addAll(spouseChildren);
+			}
+		} catch (Exception e) {}
+		try {
+			if (cohabitant != null) {
+				cohabitantChildren = memberFamilyLogic.getChildrenFor(cohabitant);				
+			}
+			if (cohabitantChildren != null) {
+				children.addAll(cohabitantChildren);
+			}
+		} catch (Exception e) {}
+				
+		Address registerLeaderAddress = communeUserBusiness.getUsersMainAddress(registerLeader);
+		Iterator iter = children.iterator();
+		while (iter.hasNext()) {
+			User child = (User) iter.next();
+			int childId = ((Integer) child.getPrimaryKey()).intValue();
+			Address childAddress = communeUserBusiness.getUsersMainAddress(childId);
+			boolean addressMatch = communeUserBusiness.getIfUserAddressesMatch(registerLeaderAddress, childAddress);
+			if (!addressMatch) {
+				continue;
+			}
+			Collection contracts = childCareBusiness.getContractsByChild(childId);
+			Iterator iter2 = contracts.iterator();
+			while (iter2.hasNext()) {
+				ChildCareContract contract = (ChildCareContract) iter2.next();
+				contract.setInvoiceReciver(registerLeader);
+				contract.store();
+			}
+		}
+				
 		return true;
 	}
 
