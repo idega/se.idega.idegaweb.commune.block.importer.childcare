@@ -404,7 +404,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				
 			int schoolID = Integer.parseInt(school.getPrimaryKey().toString());
 			int classID = Integer.parseInt(sClass.getPrimaryKey().toString());
-			boolean importDone = cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
+			boolean importDone = cc.importChildToProvider(((Integer)child.getPrimaryKey()).intValue(), schoolID, classID, (int) hours, sDateT, eDateT,
 				locale, parent, performer);
 			if (importDone)
 				report.append("Contract created for child "+child.getName());
