@@ -1,5 +1,5 @@
 /*
- * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.5 2003/12/19 14:37:25 anders Exp $
+ * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.6 2003/12/19 14:46:14 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.ejb.CreateException;
+//import javax.ejb.CreateException;
 import javax.ejb.FinderException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
@@ -49,10 +49,10 @@ import com.idega.util.Timer;
  * Note that the "12" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/12/19 14:37:25 $ by $Author: anders $
+ * Last modified: $Date: 2003/12/19 14:46:14 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean implements NackaCohabitantImportFileHandler, ImportFileHandler {
 
@@ -273,12 +273,12 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 			}
 		} catch (NoSpouseFound e) {}
 		if (!hasSpouse && cohabitant != null) {
-			try {
-				memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);				
-			} catch (CreateException e) {
-				errorLog.put(row, "Cannot create cohabitant relationship for personal Ids: " + registerLeaderPersonalId + ", " + cohabitantPersonalId);
-				return false;
-			}
+//			try {
+//				memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);				
+//			} catch (CreateException e) {
+//				errorLog.put(row, "Cannot create cohabitant relationship for personal Ids: " + registerLeaderPersonalId + ", " + cohabitantPersonalId);
+//				return false;
+//			}
 		}
 		
 		return true;
