@@ -67,20 +67,21 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private ArrayList userValues;
 	private List failedSchools;
 	private List failedRecords;
+	private List notFoundChildren;
 	public static final String DBV = "DBV";		//This is the name of the class/group that is created for the DBV
 
 	private static final int COLUMN_CHILD_PERSONAL_ID = 0;
 	private static final int COLUMN_CHILD_NAME = 1;
 	private static final int COLUMN_UNIT = 2;
 	private static final int COLUMN_DBV_NAME = 3;
-//	private static final int COLUMN_DBV_PERSONAL_ID = 4;
+//	private static final int COLUMN_DBV_PERSONAL_ID = 4; //Not used
 	private static final int COLUMN_HOURS = 5;
 	private static final int COLUMN_START_DATE = 6;
 	private static final int COLUMN_END_DATE = 7;
-	private Gender female;
-	private Gender male;
+//	private Gender female;
+//	private Gender male;
 	private Report report;
-	private int successCount, failCount, alreadyChoosenCount, count = 0;
+	private int successCount, failCount, alreadyChoosenCount, count;
 	String item;
 	
 	public NackaPlacedChildImportFileHandlerBean() {
@@ -89,8 +90,10 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	public boolean handleRecords() throws RemoteException {
 		failedSchools = new ArrayList();
 		failedRecords = new ArrayList();
+		notFoundChildren = new ArrayList();
 		transaction = this.getSessionContext().getUserTransaction();
-		report = new Report(file.getFile().getName());
+		report = new Report(file.getFile().getName());	//Create a report file. I will be located in the Report dir
+		//Cero all counters used just for reporting purposes
 		count = 0;
 		failCount = 0;
 		successCount = 0;
@@ -114,22 +117,19 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			//iterate through the records and process them
 			file.getNextRecord();	//Skip header
 			while (!(item = (String) file.getNextRecord()).equals("")) {
-				count++;
 				if (!processRecord(item))
 					failedRecords.add(item);
 				if ((count % 200) == 0) {
 					System.out.println(
-						"NackaPlacedChildHandler processing RECORD ["
-							+ count
-							+ "] time: "
+						"NackaPlacedChildHandler processing RECORD [" + count + "] time: "
 							+ IWTimestamp.getTimestampRightNow().toString());
 				}
 				item = null;
 			}
 			clock.stop();
+			
 			printFailedRecords();
-			report.append(
-				"\nNackaQueueHandler processed "+ successCount
+			report.append("\nNackaQueueHandler processed "+ successCount
 					+ " records successfuly out of "+ count+ "records.\n");
 			report.append(alreadyChoosenCount+" of the selections had already been imported.\n");
 			report.append("Time to handleRecords: " + clock.getTime() + " ms  OR " + ((int) (clock.getTime() / 1000)) + " s\n");
@@ -158,17 +158,18 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		try {
 			success = storeUserInfo();
 			if (success) {
-//				System.out.println("Record processed OK");
 				successCount++;
 				count++;
 			} else {
 				report.append("The problems above comes from the following line in the file:\n" + record + "\n");
-//				System.out.println("Record could not be stored, please update.");
 				failCount++;
 				count++;
 			}
 		} catch (headerException e) {
 			// We don´t really care about the header. Just make sure that it isn´t counted.
+		} catch (alreadyCreatedeException e) {
+			report.append("The following line will not be imported:\n" + record + "\n");
+			alreadyChoosenCount++;
 		}
 		userValues = null;
 		return success;
@@ -191,9 +192,17 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				report.append((String) schools.next());
 			}
 		}
+		if (!notFoundChildren.isEmpty()) {
+			report.append("\nChildren missing from database or have different names. These have been created:\n");
+			Iterator chIterator = notFoundChildren.iterator();
+			while (chIterator.hasNext()) {
+				String name = (String) chIterator.next();
+				report.append(name + "\n");
+			}
+		}
 	}
 	
-	protected boolean storeUserInfo() throws RemoteException, headerException {
+	protected boolean storeUserInfo() throws RemoteException, headerException, alreadyCreatedeException {
 		User child = null;
 		//variables
 		String caretaker = "";
@@ -260,14 +269,39 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				System.out.println(" USER IS NULL!!??? should cast finderexception");
 			}
 		} catch (FinderException e) {
-			report.append("User not found for PIN : " + PIN + " CREATING");
-			System.out.println("User not found for PIN : " + PIN + " CREATING");
-			//create special citizen user by pin
 			try {
-				child = biz.createSpecialCitizenByPersonalIDIfDoesNotExist(
-						PIN, "", "", PIN, getGenderFromPin(PIN), getBirthDateFromPin(PIN));
+				report.append("Could not find any child with personal id " + PIN + "  ");
+				report.append("Child name is " + childName);
+				//create a temporary user for the child
+				//initialize business beans and data homes
+				CommuneUserBusiness biz;
+				biz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
+				String firstName = null, lastName = null;
+				Gender gender;
+				GenderHome genderHome = (GenderHome) getIDOHome(Gender.class);
+				char genderChar = PIN.charAt(PIN.length()-2);
+				String maleStr = "13579";
+				if(maleStr.indexOf(genderChar)>-1){
+					gender = genderHome.getMaleGender();
+				}else {
+					gender = genderHome.getFemaleGender();
+				}
+				IWTimestamp dateOfBirth = new IWTimestamp();
+				dateOfBirth.setDate(PIN);
+				
+				int com = childName.indexOf(',');
+				if(com > -1){
+					lastName = childName.substring(0,com);
+					firstName = childName.substring(com+1);
+				}
+				
+				child = biz.createSpecialCitizen(firstName, "", lastName, PIN, gender, dateOfBirth);
+				if (!notFoundChildren.contains(childName)) {
+					notFoundChildren.add(childName);
+				}
+//				success = false;
 			} catch (Exception ex) {
-				report.append("Could not create the child "+ex.toString());
+				report.append("There was an error while creating special user "+PIN+" "+childName+"\n");
 				ex.printStackTrace();
 				return false;
 			}
@@ -277,7 +311,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			//this can only work if there is only one school with this name. add more parameters for other areas
 			school = sHome.findBySchoolName(caretaker);
 		} catch (FinderException e) {
-			report.append("Could not find any childcare taker  with name " + caretaker);
+			report.append("Could not find any childcare taker with name " + caretaker);
 			if (!failedSchools.contains(caretaker)) {
 				failedSchools.add(caretaker);
 			}
@@ -303,7 +337,13 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			Iterator oldClasses = classMembers.iterator();
 			while (oldClasses.hasNext()) {
 				SchoolClassMember temp = (SchoolClassMember) oldClasses.next();
-				report.append(child.getName()+" is already in class "+temp.getSchoolClass().getSchoolClassName());
+				if(!temp.getSchoolClass().getSchoolClassName().equals(DBV))
+				{
+					report.append(child.getName()+" is already in class "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
+					throw new alreadyCreatedeException();
+				} else {
+					report.append(child.getName()+" is already in childcare "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
+				}
 //				try {
 //					temp.remove();
 //				} catch (RemoveException e) {
@@ -391,7 +431,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 //		String sValue = getUserProperty(columnIndex);
 //		return Integer.parseInt(sValue);
 //	}
-	
+/*	
 	private IWTimestamp getBirthDateFromPin(String pin) {
 		//pin format = 190010221208 yyyymmddxxxx
 		int dd = Integer.parseInt(pin.substring(6, 8));
@@ -423,7 +463,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			return null; //if something happened
 		}
 	}
-	
+*/	
 	/**
 	 * Not used
 	 * @param rootGroup The rootGroup to set
@@ -436,6 +476,16 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	 */
 	public List getFailedRecords() {
 		return failedRecords;
+	}
+
+	private class alreadyCreatedeException extends Exception{
+		public alreadyCreatedeException(){
+			super();
+		}
+		
+		public alreadyCreatedeException(String s){
+			super(s);
+		}
 	}
 	private class headerException extends Exception{
 		public headerException(){
