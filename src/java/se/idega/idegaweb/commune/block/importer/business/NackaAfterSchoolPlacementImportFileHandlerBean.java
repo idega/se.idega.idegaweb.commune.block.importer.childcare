@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.6 2003/11/06 08:38:46 anders Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.7 2003/11/07 14:08:02 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -13,7 +13,7 @@ package se.idega.idegaweb.commune.block.importer.business;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -58,10 +58,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/11/06 08:38:46 $ by $Author: anders $
+ * Last modified: $Date: 2003/11/07 14:08:02 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -82,21 +82,22 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 	private ArrayList userValues;
 	private ArrayList failedRecords = null;
 	private Map failedSchools = null;
+	private Map errorLog = null;
 
 	private User performer = null;
 	private Locale locale = null;
 		
-	private final int COLUMN_PERSONAL_ID = 0;  
-//	private final int COLUMN_CHILD_NAME = 1;  
-//	private final int COLUMN_ADDRESS = 2;  
-//	private final int COLUMN_ZIP_CODE = 3;  
-//	private final int COLUMN_ZIP_AREA = 4;  
-//	private final int COLUMN_COMMUNE = 5;  
-	private final int COLUMN_PROVIDER_NAME = 6;  
-	private final int COLUMN_AFTER_SCHOOL_TYPE = 7;  
-	private final int COLUMN_PLACEMENT_FROM_DATE = 8;  
-	private final int COLUMN_PLACEMENT_TO_DATE = 9;  
-	private final int COLUMN_HOURS = 10;  
+	private final static int COLUMN_PERSONAL_ID = 0;  
+//	private final static int COLUMN_CHILD_NAME = 1;  
+//	private final static int COLUMN_ADDRESS = 2;  
+//	private final static int COLUMN_ZIP_CODE = 3;  
+//	private final static int COLUMN_ZIP_AREA = 4;  
+//	private final static int COLUMN_COMMUNE = 5;  
+	private final static int COLUMN_PROVIDER_NAME = 6;  
+	private final static int COLUMN_AFTER_SCHOOL_TYPE = 7;  
+	private final static int COLUMN_PLACEMENT_FROM_DATE = 8;  
+	private final static int COLUMN_PLACEMENT_TO_DATE = 9;  
+	private final static int COLUMN_HOURS = 10;  
 	
 	/**
 	 * Default constructor.
@@ -108,7 +109,8 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 	 */
 	public boolean handleRecords() throws RemoteException{
 		failedRecords = new ArrayList();
-		failedSchools = new HashMap();
+		failedSchools = new TreeMap();
+		errorLog = new TreeMap();
 		
 		transaction = this.getSessionContext().getUserTransaction();
         
@@ -193,7 +195,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			return true;
 		}
 		userValues = file.getValuesFromRecordString(record);
-		boolean success = storeUserInfo();
+		boolean success = storeUserInfo(count);
 		userValues = null;
 				
 		return success;
@@ -203,12 +205,14 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 	 * @see com.idega.block.importer.business.ImportFileHandler#printFailedRecords() 
 	 */
 	public void printFailedRecords() {
+		System.out.println("--------------------------------------------\n");
+		
 		if (failedRecords.isEmpty()) {
 			if (failedSchools.isEmpty()) {
 				System.out.println("All records imported successfully.");
 			}
 		} else {
-			System.out.println("Import failed for these records, please fix and import again:");
+			System.out.println("Import failed for these records, please fix and import again:\n");
 		}
   
 		Iterator iter = failedRecords.iterator();
@@ -218,7 +222,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		}
 
 		if (!failedSchools.isEmpty()) {
-			System.out.println("Schools missing from database or have different names:");
+			System.out.println("\nSchools missing from database or have different names:\n");
 		}
 		Collection cols = failedSchools.values();
 		Iterator schools = cols.iterator();
@@ -226,26 +230,48 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		while (schools.hasNext()) {
 			String name = (String) schools.next();
 			System.out.println(name);
-		}	
+		}
+		
+		if (!errorLog.isEmpty()) {
+			System.out.println("\nErrors during import:\n");
+		}
+		Iterator rowIter = errorLog.keySet().iterator();
+		while (rowIter.hasNext()) {
+			Integer row = (Integer) rowIter.next();
+			String message = (String) errorLog.get(row);
+			System.out.println("Line " + row + ": " + message);
+		}
+		
+		System.out.println();
 	}
 
 	/**
 	 * Stores one placement.
 	 */
-	protected boolean storeUserInfo() throws RemoteException {
-
+	protected boolean storeUserInfo(int rowNr) throws RemoteException {
+		Integer row = new Integer(rowNr);
+		
 		User child = null;
 		SchoolType schoolType = null;
 		School school = null;
 
 		String personalId = getUserProperty(COLUMN_PERSONAL_ID);
-		if (personalId == null) return false;
+		if (personalId == null) {
+			errorLog.put(row, "Child's personal ID cannot be empty.");
+			return false;
+		}
 		
 		String providerName = getUserProperty(COLUMN_PROVIDER_NAME);
-		if (providerName == null) return false;
+		if (providerName == null) {
+			errorLog.put(row, "Provider name cannot be empty.");
+			return false;
+		}
 
 		String afterSchoolType = getUserProperty(COLUMN_AFTER_SCHOOL_TYPE);
-		if (afterSchoolType == null) return false;
+		if (afterSchoolType == null) {
+			errorLog.put(row, "Provider type cannot be empty.");
+			return false;
+		}
 		
 		String placementFromDate = getUserProperty(COLUMN_PLACEMENT_FROM_DATE);
 		if ((placementFromDate == null) || (placementFromDate.length() != 8)) return false;
@@ -253,6 +279,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		try {
 			placementFrom.setDate(placementFromDate);
 		} catch (DateFormatException e) {
+			errorLog.put(row, "Placement from date must be in the form: YYYYMMDD");
 			return false;
 		}
 		
@@ -264,16 +291,21 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			try {
 				placementTo.setDate(placementToDate);
 			} catch (DateFormatException e) {
+				errorLog.put(row, "Placement to date must be in the form: YYYYMMDD");
 				return false; 
 			}
 		}
 		
 		String hoursText = getUserProperty(COLUMN_HOURS);
-		if (hoursText == null) return false;
+		if (hoursText == null) {
+			errorLog.put(row, "The week hours cannot be empty.");
+			return false;
+		}
 		int hours = 0;
 		try {
 			hours = (int) Float.parseFloat(hoursText);
 		} catch (NumberFormatException e) {
+			errorLog.put(row, "The week hours must be a number.");
 			return false;
 		}		
 
@@ -281,7 +313,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		try {
 			child = biz.getUserHome().findByPersonalID(personalId);
 		} catch (FinderException e) {
-			System.out.println("Child not found for PIN: " + personalId);
+			errorLog.put(row, "Child not found for PIN: " + personalId);
 			return false;
 		}
 		
@@ -296,7 +328,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		try {
 			schoolType = sTypeHome.findByTypeKey(typeKey);
 		} catch (FinderException e) {
-			System.out.println("School type: " + afterSchoolType + " not found in database (key = " + typeKey + ").");
+			errorLog.put(row, "School type: " + afterSchoolType + " not found in database (key = " + typeKey + ").");
 			return false;
 		}
 				
@@ -319,9 +351,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			}
 		}
 		if (!hasSchoolType) {
-			String s = "School type '" + afterSchoolType + "' not found in after-school center: " + providerName;
-			System.out.println(s);
-			failedSchools.put(providerName, providerName);
+			errorLog.put(row, "School type '" + afterSchoolType + "' not found in after-school center: " + providerName);
 			return false;
 		}
 										
@@ -359,7 +389,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			} catch (Exception e2) {}
 
 			if (schoolClass == null) {
-				System.out.println("Could not create school class: " + schoolClassName);
+				errorLog.put(row, "Could not create school class: " + schoolClassName);
 				return false;
 			}				
 		}
@@ -402,7 +432,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		if (member == null) {			
 			member = schoolBiz.storeSchoolClassMember(schoolClass, child);
 			if (member == null) {
-				System.out.println("School Class member could not be created for personal id: " + personalId);	
+				errorLog.put(row, "School Class member could not be created for personal id: " + personalId);	
 				return false;
 			}
 		}
@@ -418,7 +448,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		//Create the contract
 		User parent = biz.getCustodianForChild(child);
 		if (parent == null) {
-			System.out.println("Parent not found for child with PIN: " + personalId);
+			errorLog.put(row, "Parent not found for child with PIN: " + personalId);
 			return false;
 		}
 		
@@ -441,7 +471,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 				importDone = true;
 			}
 		} catch (UnavailableIWContext e2) {
-			System.out.println("Could not get the IWContext. Cannot create the contract.");
+			errorLog.put(row, "Could not get the IWContext. Cannot create the contract.");
 			return false;
 		}
 
