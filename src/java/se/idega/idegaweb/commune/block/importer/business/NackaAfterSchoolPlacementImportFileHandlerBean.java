@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.8 2003/11/20 11:56:52 anders Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.9 2003/11/20 12:36:02 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -58,10 +58,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/11/20 11:56:52 $ by $Author: anders $
+ * Last modified: $Date: 2003/11/20 12:36:02 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -341,15 +341,18 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		}
 		
 		// school type
-		Iterator schoolTypeIter = schoolBiz.getSchoolRelatedSchoolTypes(school).values().iterator();
 		boolean hasSchoolType = false;
-		while (schoolTypeIter.hasNext()) {
-			SchoolType st = (SchoolType) schoolTypeIter.next();
-			if (st.getPrimaryKey().equals(schoolType.getPrimaryKey())) {
-				hasSchoolType = true;
-				break;
+		try {
+			Iterator schoolTypeIter = schoolBiz.getSchoolRelatedSchoolTypes(school).values().iterator();
+			while (schoolTypeIter.hasNext()) {
+				SchoolType st = (SchoolType) schoolTypeIter.next();
+				if (st.getPrimaryKey().equals(schoolType.getPrimaryKey())) {
+					hasSchoolType = true;
+					break;
+				}
 			}
-		}
+		} catch (Exception e) {}
+		
 		if (!hasSchoolType) {
 			errorLog.put(row, "School type '" + afterSchoolType + "' not found in after-school center: " + providerName);
 			return false;
