@@ -1,6 +1,7 @@
 package se.idega.idegaweb.commune.block.importer.business;
 import java.io.ByteArrayInputStream;
 import java.rmi.RemoteException;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -312,7 +313,12 @@ public abstract class NackaQueueImportFileHandlerBean
 				}else {
 					gender = genderHome.getFemaleGender();
 				}
-				IWTimestamp dateOfBirth = new IWTimestamp(PIDChecker.getInstance().getDateFromPersonalID(childPersonalID));
+				Date date = PIDChecker.getInstance().getDateFromPersonalID(childPersonalID);
+				if (date == null) {
+					report.append("Date of birth is null for " + childName + " ("+childPersonalID+")\n");
+					return false;
+				}
+				IWTimestamp dateOfBirth = new IWTimestamp(date);
 				
 				int com = childName.indexOf(',');
 				if(com > -1){
