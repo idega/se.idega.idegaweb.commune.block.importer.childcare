@@ -113,7 +113,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
         		
         if( ! processRecord(item) ) failedRecords.add(item);
 
-        if( (count % 500) == 0 ){
+        if( (count % 10) == 0 ){
           System.out.println("NackaCheckHandler processing RECORD ["+count+"] time: "+IWTimestamp.getTimestampRightNow().toString());
         }
         
