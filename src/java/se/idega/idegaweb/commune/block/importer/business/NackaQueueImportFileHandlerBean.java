@@ -131,7 +131,7 @@ public abstract class NackaQueueImportFileHandlerBean
 					reportFolder = fileHome.create();
 					reportFolder.setName("Reports");
 					reportFolder.setMimeType("application/vnd.iw-folder");
-					reportFolder.insert();
+					reportFolder.store();
 					root.addChild(reportFolder);
 					System.out.println("Reports folder created");
 				} catch (FinderException e1) {
@@ -141,7 +141,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			
 			ICFile reportFile;
 			try {
-				reportFile = ((com.idega.core.data.ICFileHome)com.idega.data.IDOLookup.getHomeLegacy(ICFile.class)).createLegacy();
+				reportFile = ((com.idega.core.data.ICFileHome)com.idega.data.IDOLookup.getHome(ICFile.class)).create();
 				byte[] bytes = report.toString().getBytes();
 
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -161,7 +161,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				}
 				reportFile.setName(filename+".report");
 				reportFile.setFileSize(report.length());
-				reportFile.insert();
+				reportFile.store();
 				if(reportFolder!=null)
 				{
 					reportFolder.addChild(reportFile);
