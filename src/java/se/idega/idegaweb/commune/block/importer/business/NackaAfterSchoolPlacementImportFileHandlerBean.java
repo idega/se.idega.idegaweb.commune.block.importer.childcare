@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.12 2003/11/26 06:35:16 laddi Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.13 2003/11/26 09:04:33 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -60,10 +60,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/11/26 06:35:16 $ by $Author: laddi $
+ * Last modified: $Date: 2003/11/26 09:04:33 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -443,8 +443,8 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		}
 		
 		// school Class member
-		int schoolClassId = ((Integer) schoolClass.getPrimaryKey()).intValue();
-		SchoolClassMember member = null;
+//		int schoolClassId = ((Integer) schoolClass.getPrimaryKey()).intValue();
+//		SchoolClassMember member = null;
 		try {
 			Collection placements = sClassMemberHome.findByStudent(child);
 			if (placements != null) {
@@ -461,37 +461,37 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 					if (stKey.equals("sch_type.school_type_fritids6") ||
 							stKey.equals("sch_type.school_type_fritids7-9")) {
 						if (placement.getRemovedDate() == null) {
-							int scId = placement.getSchoolClassId();
-							if (scId == schoolClassId) {
-								member = placement;
-							} else {
+//							int scId = placement.getSchoolClassId();
+//							if (scId == schoolClassId) {
+//								member = placement;
+//							} else {
 								IWTimestamp yesterday = new IWTimestamp();
 								yesterday.addDays(-1);
 								placement.setRemovedDate(yesterday.getTimestamp());
 								placement.store();
-							}
-							placement.store();
+//							}
+//							placement.store();
 						}
 					}
 				}
 			}
 		} catch (FinderException f) {}
 
-		if (member == null) {			
-			member = schoolBiz.storeSchoolClassMember(schoolClass, child);
-			if (member == null) {
-				errorLog.put(row, "School Class member could not be created for personal id: " + personalId);	
-				return false;
-			}
-		}
+//		if (member == null) {			
+//			member = schoolBiz.storeSchoolClassMember(schoolClass, child);
+//			if (member == null) {
+//				errorLog.put(row, "School Class member could not be created for personal id: " + personalId);	
+//				return false;
+//			}
+//		}
 		
-		member.setRegisterDate(placementFrom.getTimestamp());
-		member.setRegistrationCreatedDate(IWTimestamp.getTimestampRightNow());
-		member.setSchoolTypeId(((Integer) schoolType.getPrimaryKey()).intValue());
-		if (placementTo != null) {
-			member.setRemovedDate(placementTo.getTimestamp());
-		}
-		member.store();
+//		member.setRegisterDate(placementFrom.getTimestamp());
+//		member.setRegistrationCreatedDate(IWTimestamp.getTimestampRightNow());
+//		member.setSchoolTypeId(((Integer) schoolType.getPrimaryKey()).intValue());
+//		if (placementTo != null) {
+//			member.setRemovedDate(placementTo.getTimestamp());
+//		}
+//		member.store();
 
 		//Create the contract
 		User parent = biz.getCustodianForChild(child);
@@ -512,8 +512,9 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			int schoolId = ((Integer) school.getPrimaryKey()).intValue();
 			int classId = ((Integer) schoolClass.getPrimaryKey()).intValue();
 			try {
+				int schoolTypeId = ((Integer) schoolType.getPrimaryKey()).intValue();
 				importDone = childCareBiz.importChildToProvider(-1, ((Integer) child.getPrimaryKey()).intValue(),
-						schoolId, classId, hours, -1, -1, null, placementFrom, placementTo, locale, parent, performer);
+						schoolId, classId, hours, -1, schoolTypeId, null, placementFrom, placementTo, locale, parent, performer);
 			} catch (AlreadyCreatedException e) {
 				// The contract already exists (could happen if the imort is run more than one time)
 				importDone = true;
