@@ -227,8 +227,7 @@ public abstract class NackaQueueImportFileHandlerBean
 			}
 			String prio = getQueueProperty(this.COLUMN_PRIORITY);
 			if (prio == null) {
-				report.append("Failed parsing priority for " + childName + "\n");
-				success = false;
+				prio = "";
 			}
 			int choiceNr = 0;
 			try {
