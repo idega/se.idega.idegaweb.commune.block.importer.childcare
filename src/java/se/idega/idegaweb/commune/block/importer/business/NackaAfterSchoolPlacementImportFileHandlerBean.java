@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.4 2003/10/30 09:22:04 anders Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.5 2003/11/03 13:19:52 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -58,10 +58,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/10/30 09:22:04 $ by $Author: anders $
+ * Last modified: $Date: 2003/11/03 13:19:52 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -344,7 +344,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 				throw new FinderException();
 			}				
 		} catch (Exception e) {
-			System.out.println("School class not found, creating '" + schoolClassName + "' for after-school center '" + providerName + "'.");	
+//			System.out.println("School Class not found, creating '" + schoolClassName + "' for after-school center '" + providerName + "'.");	
 			int schoolId = ((Integer) school.getPrimaryKey()).intValue();
 			int schoolTypeId = ((Integer) schoolType.getPrimaryKey()).intValue();
 			int seasonId = ((Integer) season.getPrimaryKey()).intValue();
@@ -364,7 +364,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			}				
 		}
 		
-		// school class member
+		// school Class member
 		int schoolClassId = ((Integer) schoolClass.getPrimaryKey()).intValue();
 		SchoolClassMember member = null;
 		try {
@@ -402,7 +402,7 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 		if (member == null) {			
 			member = schoolBiz.storeSchoolClassMember(schoolClass, child);
 			if (member == null) {
-				System.out.println("School class member could not be created for personal id: " + personalId);	
+				System.out.println("School Class member could not be created for personal id: " + personalId);	
 				return false;
 			}
 		}
