@@ -14,6 +14,7 @@ import javax.transaction.UserTransaction;
 import se.idega.idegaweb.commune.business.CommuneUserBusiness;
 import se.idega.idegaweb.commune.childcare.data.ChildCareQueue;
 import se.idega.idegaweb.commune.childcare.data.ChildCareQueueHome;
+import se.idega.util.PIDChecker;
 
 import com.idega.block.importer.business.ImportFileHandler;
 import com.idega.block.importer.data.ImportFile;
@@ -194,7 +195,7 @@ public abstract class NackaQueueImportFileHandlerBean
 	 * @return true if the record was parsed and stored OK, otherwise false
 	 * @throws RemoteException
 	 */
-	private boolean processRecord(String record) throws RemoteException {
+	private boolean processRecord(String record) {
 		queueValues = file.getValuesFromRecordString(record);
 //		System.out.println("Nacka queue THE RECORD = " + record);
 		boolean success = true;
@@ -306,8 +307,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				}else {
 					gender = genderHome.getFemaleGender();
 				}
-				IWTimestamp dateOfBirth = new IWTimestamp();
-				dateOfBirth.setDate(childPersonalID);
+				IWTimestamp dateOfBirth = new IWTimestamp(PIDChecker.getInstance().getDateFromPersonalID(childPersonalID));
 				
 				int com = childName.indexOf(',');
 				if(com > -1){
@@ -475,6 +475,6 @@ public abstract class NackaQueueImportFileHandlerBean
 	/**
 	 * @see com.idega.block.importer.business.ImportFileHandler#setRootGroup(com.idega.user.data.Group)
 	 */
-	public void setRootGroup(Group rootGroup) throws RemoteException {
+	public void setRootGroup(Group rootGroup) {
 	}
 }
