@@ -105,7 +105,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				item = null;
 			}
 			printFailedRecords();
-//			transaction.commit();
+			transaction.commit();
 			clock.stop();
 			report.append(
 				"\nNackaQueueHandler processed "
