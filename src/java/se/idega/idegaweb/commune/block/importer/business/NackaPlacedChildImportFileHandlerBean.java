@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 import javax.ejb.FinderException;
 import javax.transaction.SystemException;
@@ -70,6 +71,8 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private List notFoundChildren;
 	private List notFoundParent;
 	private Collection childcareTypes;
+	private User performer;
+	private Locale locale;
 	
 	public static final String DBV = "Placerade barn";		//This is the name of the class/group that is created for the DBV
 
@@ -171,7 +174,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			}
 		} catch (headerException e) {
 			// We don´t really care about the header. Just make sure that it isn´t counted.
-		} catch (alreadyCreatedeException e) {
+		} catch (AlreadyCreatedException e) {
 			report.append("The following line will not be imported:\n" + record + "\n");
 			alreadyChoosenCount++;
 		}
@@ -214,7 +217,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		}
 	}
 	
-	protected boolean storeUserInfo() throws RemoteException, headerException, alreadyCreatedeException {
+	protected boolean storeUserInfo() throws RemoteException, headerException, AlreadyCreatedException {
 		User child = null;
 		//variables
 		String caretaker = "";
@@ -359,7 +362,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 				{
 					report.append(child.getName()+" is already in childcare "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
 					if (!isDBV)
-						throw new alreadyCreatedeException();
+						throw new AlreadyCreatedException();
 				} else {
 					report.append(child.getName()+" is already in childcare "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
 				}
@@ -394,10 +397,15 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		IWContext iwc;
 		try {
 			iwc = IWContext.getInstance();
+			if (performer == null)
+				performer = iwc.getCurrentUser();
+			if (locale == null)
+				locale = iwc.getCurrentLocale();
+				
 			int schoolID = Integer.parseInt(school.getPrimaryKey().toString());
 			int classID = Integer.parseInt(sClass.getPrimaryKey().toString());
 			boolean importDone = cc.importChildToProvider(child.getID(), schoolID, classID, (int) hours, sDateT, eDateT,
-				iwc.getCurrentLocale(), parent, iwc.getCurrentUser());
+				locale, parent, performer);
 			if (importDone)
 				report.append("Contract created for child "+child.getName());
 			else
@@ -506,15 +514,6 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		return failedRecords;
 	}
 
-	private class alreadyCreatedeException extends Exception{
-		public alreadyCreatedeException(){
-			super();
-		}
-		
-		public alreadyCreatedeException(String s){
-			super(s);
-		}
-	}
 	private class headerException extends Exception{
 		public headerException(){
 			super();
