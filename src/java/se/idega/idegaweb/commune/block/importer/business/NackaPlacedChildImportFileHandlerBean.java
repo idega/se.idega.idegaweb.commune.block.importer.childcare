@@ -4,23 +4,35 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.ejb.FinderException;
 import javax.ejb.RemoveException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+
 import se.idega.idegaweb.commune.business.CommuneUserBusiness;
 import se.idega.util.Report;
 
 import com.idega.block.importer.business.ImportFileHandler;
 import com.idega.block.importer.data.ImportFile;
 import com.idega.block.school.business.SchoolBusiness;
-import com.idega.block.school.data.*;
+import com.idega.block.school.data.School;
+import com.idega.block.school.data.SchoolClass;
+import com.idega.block.school.data.SchoolClassHome;
+import com.idega.block.school.data.SchoolClassMember;
+import com.idega.block.school.data.SchoolClassMemberHome;
+import com.idega.block.school.data.SchoolHome;
+import com.idega.block.school.data.SchoolSeason;
+import com.idega.block.school.data.SchoolSeasonHome;
+import com.idega.block.school.data.SchoolYear;
+import com.idega.block.school.data.SchoolYearHome;
 import com.idega.business.IBOServiceBean;
 import com.idega.user.data.Gender;
 import com.idega.user.data.GenderHome;
 import com.idega.user.data.Group;
 import com.idega.user.data.User;
 import com.idega.user.data.UserHome;
+import com.idega.util.DateFormatException;
 import com.idega.util.IWTimestamp;
 import com.idega.util.Timer;
 /**
@@ -54,13 +66,21 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	private List failedSchools;
 	private List failedRecords;
 	private static final String DBV = "DBV";
-	private static final int COLUMN_PERSONAL_ID = 0;
-	private static final int COLUMN_TYPE = 1;
+
+/* File format	
+	BarnPnr 	BarnNamn 	Enhet	DBV	DBVPnr	Timmar	PlacFrom	PlacTom
+	199207200958	Zetterlund Dahl, Fredrik		Hedström, Camilla	196908300202	15.000000	20011113	20030630
+	199208192709	Ripe, Michaela		Brissman, Eva	195801041129	9.000000	20010813	20030630	
+*/
+	
+	private static final int COLUMN_CHILD_PERSONAL_ID = 0;
+	private static final int COLUMN_CHILD_NAME = 1;
 	private static final int COLUMN_UNIT = 2;
-//	private static final int COLUMN_DBV = 3;
-//	private static final int COLUMN_DBV_PERSONAL_ID = 4;
-	private static final int COLUMN_DBV = 2;
-	private static final int COLUMN_DBV_PERSONAL_ID = 3;
+	private static final int COLUMN_DBV_NAME = 3;
+	private static final int COLUMN_DBV_PERSONAL_ID = 4;
+	private static final int COLUMN_HOURS = 5;
+	private static final int COLUMN_START_DATE = 6;
+	private static final int COLUMN_END_DATE = 7;
 	private Gender female;
 	private Gender male;
 	private Report report;
@@ -69,7 +89,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	
 	public NackaPlacedChildImportFileHandlerBean() {
 	}
-	
+
 	public boolean handleRecords() throws RemoteException {
 		failedSchools = new ArrayList();
 		failedRecords = new ArrayList();
@@ -96,7 +116,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			//if the transaction failes all the users and their relations are removed
 			transaction.begin();
 			//iterate through the records and process them
-			file.getNextRecord();	//Skip header
+//			file.getNextRecord();	//Skip header
 			while (!(item = (String) file.getNextRecord()).equals("")) {
 				count++;
 				if (!processRecord(item))
@@ -180,38 +200,79 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	protected boolean storeUserInfo() throws RemoteException, headerException {
 		User user = null;
 		//variables
-		String PIN = getUserProperty(COLUMN_PERSONAL_ID);
+		String caretaker = "";
+		String PIN = getUserProperty(COLUMN_CHILD_PERSONAL_ID);
 		if (PIN == null)
 		{
 			report.append("Could not read the personal ID");
 			return false;
 		}
-		String type = getUserProperty(COLUMN_TYPE);
-//		if (type == null)
+		String childName = getUserProperty(COLUMN_CHILD_NAME);
+		if (childName == null)
+		{
+			report.append("Could not read the personal ID");
 //			return false;
+		}
 		String unit = getUserProperty(COLUMN_UNIT);
 //		if (unit == null)
+//		{
+//			report.append("Could not read name of the childcaretaker for child "+PIN);
 //			return false;
-		String dbv = getUserProperty(COLUMN_DBV);
-		if (dbv == null)
-		{
-			report.append("Could not read name of the childcaretaker for child "+PIN);
-			return false;
-		}
-		if(count<10)
-		{
-			report.append("Columns "+userValues.size()+" found in "+item);
-			report.append("id '"+PIN+"'");
-			report.append("type '"+type+"'");
-			report.append("unit '"+unit+"'");
-			report.append("DBV '"+dbv+"'");
-		}
+//		}
+		String dbv = getUserProperty(COLUMN_DBV_NAME);
+//		if (dbv == null)
+//		{
+//			report.append("Could not read name of the childcaretaker for child "+PIN);
+//			return false;
+//		}
 		String dbvpid = getUserProperty(COLUMN_DBV_PERSONAL_ID);
-		if (dbvpid == null)
-		{
-			report.append("Could not read id of the childcaretaker "+dbv+" for child "+PIN);
+//		if (dbvpid == null)
+//		{
+//			report.append("Could not read id of the childcaretaker "+dbv+" for child "+PIN);
+//			return false;
+//		}
+		if(unit != null){
+			caretaker = unit;
+		} else if(dbv != null){
+			caretaker = dbv;
+		} else {
+			report.append("Could not read the childcaretaker for child "+PIN);
 			return false;
 		}
+		float hours = getFloatUserProperty(COLUMN_HOURS);
+		String sDate = getUserProperty(COLUMN_START_DATE);
+		if (sDate == null) {
+			report.append("Failed parsing queue date for " + childName + "\n");
+			return false;
+		}
+		IWTimestamp sDateT = new IWTimestamp();
+		try {
+			sDateT.setDate(sDate);
+		} catch (DateFormatException e1) {
+			// TODO JJ What should we do here?
+			e1.printStackTrace();
+		}
+		String eDate = getUserProperty(COLUMN_END_DATE);
+		IWTimestamp eDateT = new IWTimestamp();
+		if (eDate == null) {
+//			report.append("Failed parsing queue date for " + childName + "\n");
+		} else
+		{
+			try {
+				eDateT.setDate(eDate);
+			} catch (DateFormatException e1) {
+				// TODO JJ What should we do here?
+				e1.printStackTrace();
+			}
+		}
+		/* File format	
+			BarnPnr 	BarnNamn 	Enhet	DBV	DBVPnr	Timmar	PlacFrom	PlacTom
+			199207200958	Zetterlund Dahl, Fredrik		Hedström, Camilla	196908300202	15.000000	20011113	20030630
+			199208192709	Ripe, Michaela		Brissman, Eva	195801041129	9.000000	20010813	20030630	
+		*/
+		System.out.println("ChP# "+PIN+"  ChName "+childName+"  DBV "+dbv+"  DBV# "+dbvpid+"  Hours "+hours+"  Date "+sDate);
+		if(true)
+			return true;
 		//database stuff
 		School school;
 //		SchoolYear year;
@@ -238,11 +299,11 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			try {
 				//school
 				//this can only work if there is only one school with this name. add more parameters for other areas
-				school = sHome.findBySchoolName(dbv);
+				school = sHome.findBySchoolName(caretaker);
 			} catch (FinderException e) {
-				report.append("Could not find any childcare taker  with name " + dbv);
-				if (!failedSchools.contains(dbv)) {
-					failedSchools.add(dbv);
+				report.append("Could not find any childcare taker  with name " + caretaker);
+				if (!failedSchools.contains(caretaker)) {
+					failedSchools.add(caretaker);
 				}
 				return false;
 			}
@@ -250,6 +311,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			SchoolClass sClass = null;
 			try {
 				sClass = sClassHome.findBySchoolClassNameSchoolSchoolYearSchoolSeason(DBV, school, year, season);
+				System.out.println("School cls found");
 			} catch (FinderException e) {
 				report.append("School cls not found creating...");
 				System.out.println("School cls not found creating...");
@@ -263,21 +325,21 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			}
 			//school cls member
 			SchoolClassMember member = null;
-			try {
-				Collection classMembers = sClassMemberHome.findByStudent(user);
-				Iterator oldClasses = classMembers.iterator();
-				while (oldClasses.hasNext()) {
-					SchoolClassMember temp = (SchoolClassMember) oldClasses.next();
-					try {
-						temp.remove();
-					} catch (RemoveException e) {
-						report.append("problem removing old placement for the child "+e.toString());
-						e.printStackTrace();
-						return false;
-					}
-				}
-			} catch (FinderException f) {
-			}
+//			try {
+//				Collection classMembers = sClassMemberHome.findByStudent(user);
+//				Iterator oldClasses = classMembers.iterator();
+//				while (oldClasses.hasNext()) {
+//					SchoolClassMember temp = (SchoolClassMember) oldClasses.next();
+//					try {
+//						temp.remove();
+//					} catch (RemoveException e) {
+//						report.append("problem removing old placement for the child "+e.toString());
+//						e.printStackTrace();
+//						return false;
+//					}
+//				}
+//			} catch (FinderException f) {
+//			}
 			report.append("School cls member not found creating...");
 			//System.out.println("School cls member not found creating...");	
 			member = schoolBiz.storeSchoolClassMember(sClass, user);
@@ -315,6 +377,7 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			} catch (FinderException f) {
 			}
 		}
+//		importChildToProvider(int childID, int providerID, int groupID, int careTime, IWTimestamp fromDate, IWTimestamp toDate, Locale locale, User parent, User admin)
 		//finished with this user
 		user = null;
 		return true;
@@ -322,6 +385,16 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 	
 	public void setImportFile(ImportFile file) {
 		this.file = file;
+	}
+	
+	private float getFloatUserProperty(int columnIndex){
+		float val;
+		try {
+			val = Float.parseFloat(getUserProperty(columnIndex));
+		} catch (Exception e) {
+			val = 0;
+		}
+		return val;
 	}
 	
 	private String getUserProperty(int columnIndex) {
