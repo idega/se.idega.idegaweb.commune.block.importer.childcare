@@ -64,10 +64,10 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
 //DBVPnr	social security number
 
   private final int COLUMN_CHILDS_PIN = 0;  
-  private final int COLUMN_SCHOOL_NAME = 1;
-  private final int COLUMN_SCHOOL_TYPE = 2; 
-  private final int COLUMN_CARETAKER_NAME = 3; 
-  private final int COLUMN_CARETAKER_PIN = 4; 
+  //private final int COLUMN_SCHOOL_NAME = 1;
+  //private final int COLUMN_SCHOOL_TYPE = 2; 
+  //private final int COLUMN_CARETAKER_NAME = 3; 
+  //private final int COLUMN_CARETAKER_PIN = 4; 
   
   SchoolType preSchoolOnly;
 	SchoolType caretakerPreSchool;
