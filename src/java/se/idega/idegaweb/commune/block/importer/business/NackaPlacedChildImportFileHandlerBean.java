@@ -208,6 +208,8 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		User child = null;
 		//variables
 		String caretaker = "";
+		boolean isDBV = false;
+		
 		String PIN = getUserProperty(COLUMN_CHILD_PERSONAL_ID);
 		if (PIN == null)
 		{
@@ -225,9 +227,11 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 //		String dbvpid = getUserProperty(COLUMN_DBV_PERSONAL_ID);
 
 		if(unit != null){
+			isDBV = false;
 			caretaker = unit;
 		} else if(dbv != null){
 			caretaker = dbv;
+			isDBV = true;
 		} else {
 			report.append("Could not read the childcaretaker for child "+PIN);
 			return false;
@@ -251,7 +255,12 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 			eDateT = null;
 		}
 		else {
-			eDateT = new IWTimestamp(eDate);
+			try {
+				eDateT = new IWTimestamp(eDate);
+			}
+			catch (Exception e) {
+				eDateT = null;
+			}
 		}
 
 		//database stuff
@@ -332,14 +341,15 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		//school cls member
 		//SchoolClassMember member = null;
 		try {
-			Collection classMembers = sClassMemberHome.findByStudentAndTypes(((Integer)child.getPrimaryKey()).intValue(), getChildcareTypes());
+			Collection classMembers = sClassMemberHome.findByStudentAndTypes(((Integer)child.getPrimaryKey()).intValue(), getSchoolTypes());
 			Iterator oldClasses = classMembers.iterator();
 			while (oldClasses.hasNext()) {
 				SchoolClassMember temp = (SchoolClassMember) oldClasses.next();
 				if(!temp.getSchoolClass().getSchoolClassName().equals(DBV))
 				{
 					report.append(child.getName()+" is already in childcare "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
-					throw new alreadyCreatedeException();
+					if (!isDBV)
+						throw new alreadyCreatedeException();
 				} else {
 					report.append(child.getName()+" is already in childcare "+temp.getSchoolClass().getSchoolClassName()+" at "+temp.getSchoolClass().getSchool().getName());
 				}
@@ -400,9 +410,9 @@ implements ImportFileHandler, NackaPlacedChildImportFileHandler
 		return val;
 	}
 	
-	private Collection getChildcareTypes() throws RemoteException {
+	private Collection getSchoolTypes() throws RemoteException {
 		if (childcareTypes == null)
-			childcareTypes = schoolBiz.findAllSchoolTypesForChildCare();
+			childcareTypes = schoolBiz.findAllSchoolTypesForSchool();
 		return childcareTypes;
 	}
 	
