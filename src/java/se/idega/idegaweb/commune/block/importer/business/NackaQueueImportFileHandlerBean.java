@@ -299,6 +299,10 @@ public abstract class NackaQueueImportFileHandlerBean
 			} catch (FinderException e) {
 				report.append("Could not find any child with personal id " + childPersonalID + "  ");
 				report.append("Child name is " + childName + "\n");
+				String providerTemp=null;
+				providerTemp=getQueueProperty(this.COLUMN_PROVIDER_NAME);
+				if (providerTemp !=null)
+					report.append("Provider is " + providerTemp + "\n");
 				//create a temporary user for the child
 				//initialize business beans and data homes
 				CommuneUserBusiness biz;
