@@ -1,5 +1,5 @@
 /*
- * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.11 2003/11/25 14:38:26 anders Exp $
+ * $Id: NackaAfterSchoolPlacementImportFileHandlerBean.java,v 1.12 2003/11/26 06:35:16 laddi Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -60,10 +60,10 @@ import com.idega.util.Timer;
  * Note that the "10" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/11/25 14:38:26 $ by $Author: anders $
+ * Last modified: $Date: 2003/11/26 06:35:16 $ by $Author: laddi $
  *
  * @author Anders Lindman
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBean implements NackaAfterSchoolPlacementImportFileHandler, ImportFileHandler {
 
@@ -512,8 +512,8 @@ public class NackaAfterSchoolPlacementImportFileHandlerBean extends IBOServiceBe
 			int schoolId = ((Integer) school.getPrimaryKey()).intValue();
 			int classId = ((Integer) schoolClass.getPrimaryKey()).intValue();
 			try {
-				importDone = childCareBiz.importChildToProvider(((Integer) child.getPrimaryKey()).intValue(),
-						schoolId, classId, hours, placementFrom, placementTo, locale, parent, performer);
+				importDone = childCareBiz.importChildToProvider(-1, ((Integer) child.getPrimaryKey()).intValue(),
+						schoolId, classId, hours, -1, -1, null, placementFrom, placementTo, locale, parent, performer);
 			} catch (AlreadyCreatedException e) {
 				// The contract already exists (could happen if the imort is run more than one time)
 				importDone = true;
