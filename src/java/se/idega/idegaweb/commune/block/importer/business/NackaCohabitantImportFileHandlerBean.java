@@ -1,5 +1,5 @@
 /*
- * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.4 2003/12/18 14:21:40 anders Exp $
+ * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.5 2003/12/19 14:37:25 anders Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -16,6 +16,7 @@ import is.idega.idegaweb.member.business.NoSpouseFound;
 import java.rmi.RemoteException;
 import java.sql.Date;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +49,10 @@ import com.idega.util.Timer;
  * Note that the "12" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2003/12/18 14:21:40 $ by $Author: anders $
+ * Last modified: $Date: 2003/12/19 14:37:25 $ by $Author: anders $
  *
  * @author Anders Lindman
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean implements NackaCohabitantImportFileHandler, ImportFileHandler {
 
@@ -62,7 +63,7 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 	private ImportFile file;
 	private UserTransaction transaction;
   
-	private ArrayList userValues;
+	private List userValues;
 	private ArrayList failedRecords = null;
 	private Map errorLog = null;
 		
@@ -155,11 +156,19 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 			// Skip header
 			return true;
 		}
-		userValues = file.getValuesFromRecordString(record);
+//		userValues = file.getValuesFromRecordString(record);
+		userValues = getValuesFromRecordString2(record);
 		boolean success = storeUserInfo(count);
 		userValues = null;
 				
 		return success;
+	}
+
+	// Hack to fix multi-tab (three tabs in a row) bug
+	private List getValuesFromRecordString2(String record) {
+		String[] s = record.split("\t");
+		List l = Arrays.asList(s);
+		return l;
 	}
   
 	/**
