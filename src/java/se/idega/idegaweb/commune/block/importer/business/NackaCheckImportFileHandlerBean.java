@@ -92,7 +92,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
       //initialize business beans and data homes           
       schoolBiz = (SchoolBusiness) this.getServiceInstance(SchoolBusiness.class);
 			comBiz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
-      
+			checkBiz = (CheckBusiness) this.getServiceInstance(CheckBusiness.class);
       sHome = schoolBiz.getSchoolHome();
 			
 			preSchoolOnly = schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(1));
