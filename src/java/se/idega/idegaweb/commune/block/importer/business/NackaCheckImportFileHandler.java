@@ -1,6 +1,5 @@
 package se.idega.idegaweb.commune.block.importer.business;
 
-import javax.ejb.*;
 
 public interface NackaCheckImportFileHandler extends com.idega.business.IBOService,com.idega.block.importer.business.ImportFileHandler
 {

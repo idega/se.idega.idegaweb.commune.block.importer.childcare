@@ -4,30 +4,24 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Collection;
 
-import javax.ejb.CreateException;
 import javax.ejb.FinderException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
-import com.idega.block.importer.business.ImportFileHandler;
-import com.idega.block.importer.data.ImportFile;
-import com.idega.block.school.data.*;
-import com.idega.block.school.business.*;
-import com.idega.business.IBOServiceBean;
-import com.idega.data.IDOAddRelationshipException;
-import com.idega.data.IDORelationshipException;
-import com.idega.user.business.UserBusiness;
-import com.idega.user.data.Group;
-import com.idega.user.data.User;
-import com.idega.user.data.UserHome;
-import com.idega.util.IWTimestamp;
-import com.idega.util.Timer;
-
 import se.idega.idegaweb.commune.business.CommuneUserBusiness;
 import se.idega.idegaweb.commune.childcare.check.business.CheckBusiness;
-import se.idega.idegaweb.commune.school.business.*;
+
+import com.idega.block.importer.business.ImportFileHandler;
+import com.idega.block.importer.data.ImportFile;
+import com.idega.block.school.business.SchoolBusiness;
+import com.idega.block.school.data.SchoolHome;
+import com.idega.block.school.data.SchoolType;
+import com.idega.business.IBOServiceBean;
+import com.idega.user.data.Group;
+import com.idega.user.data.User;
+import com.idega.util.IWTimestamp;
+import com.idega.util.Timer;
 
 
 /**
@@ -170,7 +164,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
 
   protected boolean storeCheck() throws RemoteException{
 
-    School school = null;
+    //School school = null;
     User user = null;
     
 
@@ -178,18 +172,18 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
 		String childPin = getProperty(COLUMN_CHILDS_PIN);
 		if(childPin==null) return false;
 		
-		String schoolName = getProperty(COLUMN_SCHOOL_NAME);
-    String schoolType = getProperty(COLUMN_SCHOOL_TYPE);
+		//String schoolName = getProperty(COLUMN_SCHOOL_NAME);
+    //String schoolType = getProperty(COLUMN_SCHOOL_TYPE);
 
-	  String caretakerName = getProperty(COLUMN_CARETAKER_NAME);
-	  String caretakerPIN = getProperty(COLUMN_CARETAKER_PIN);
+	  //String caretakerName = getProperty(COLUMN_CARETAKER_NAME);
+	  //String caretakerPIN = getProperty(COLUMN_CARETAKER_PIN);
 
    
-    boolean caretaker = (caretakerName!=null);
+    //boolean caretaker = (caretakerName!=null);
     
-    if( caretaker ){	
-    		schoolName = caretakerName;
-    }
+    //if( caretaker ){	
+    		//schoolName = caretakerName;
+    //}
 	
 	/*
 		try{
