@@ -147,7 +147,7 @@ public abstract class NackaQueueImportFileHandlerBean
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 				reportFile.setFileValue(bais);
 				reportFile.setMimeType("text/plain");
-				//Todo (jj) Have to find the name of the importfile, and add that here.
+				//Have to find the name of the importfile, and add that here.
 				String filename = file.getFile().getName();
 				int i = filename.indexOf('_');
 				if(i>0)
