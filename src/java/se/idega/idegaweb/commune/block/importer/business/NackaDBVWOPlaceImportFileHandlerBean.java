@@ -17,6 +17,6 @@ public class NackaDBVWOPlaceImportFileHandlerBean extends NackaQueueImportFileHa
 {
 	public NackaDBVWOPlaceImportFileHandlerBean() {
 		super();
-		queueType = DBV_WITHOUT_PLACE;
+		this.queueType = this.DBV_WITHOUT_PLACE;
 	}
 }

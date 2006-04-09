@@ -77,35 +77,37 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
   public NackaCheckImportFileHandlerBean(){}
   
   public synchronized boolean handleRecords(){
-    transaction =  this.getSessionContext().getUserTransaction();
+    this.transaction =  this.getSessionContext().getUserTransaction();
     
     Timer clock = new Timer();
     clock.start();
 
     try {
       //initialize business beans and data homes           
-      schoolBiz = (SchoolBusiness) this.getServiceInstance(SchoolBusiness.class);
-			comBiz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
-			checkBiz = (CheckBusiness) this.getServiceInstance(CheckBusiness.class);
+      this.schoolBiz = (SchoolBusiness) this.getServiceInstance(SchoolBusiness.class);
+			this.comBiz = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
+			this.checkBiz = (CheckBusiness) this.getServiceInstance(CheckBusiness.class);
       //sHome = schoolBiz.getSchoolHome();
 			
-			preSchoolOnly = schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(1));
-			caretakerPreSchool = schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(2));
-			regularSchool = schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(4));
-			schoolWithPreSchoolClass = schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(5));
+			this.preSchoolOnly = this.schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(1));
+			this.caretakerPreSchool = this.schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(2));
+			this.regularSchool = this.schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(4));
+			this.schoolWithPreSchoolClass = this.schoolBiz.getSchoolTypeHome().findByPrimaryKey(new Integer(5));
 			
       
       //if the transaction failes all the users and their relations are removed
-      transaction.begin();
+      this.transaction.begin();
 
       //iterate through the records and process them
       String item;
 
       int count = 0;
-      while ( !(item=(String)file.getNextRecord()).equals("") ) {
+      while ( !(item=(String)this.file.getNextRecord()).equals("") ) {
         count++;
         		
-        if( ! processRecord(item) ) failedRecords.add(item);
+        if( ! processRecord(item) ) {
+					this.failedRecords.add(item);
+				}
 
         if( (count % 10) == 0 ){
           System.out.println("NackaCheckHandler processing RECORD ["+count+"] time: "+IWTimestamp.getTimestampRightNow().toString());
@@ -123,7 +125,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
       // System.gc();
       //success commit changes
       
-      transaction.commit();
+      this.transaction.commit();
       
       return true;
     }
@@ -131,7 +133,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
      ex.printStackTrace();
 
      try {
-      transaction.rollback();
+      this.transaction.rollback();
      }
      catch (SystemException e) {
        e.printStackTrace();
@@ -143,12 +145,12 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
   }
 
   private boolean processRecord(String record) throws RemoteException{
-    schoolValues = file.getValuesFromRecordString(record);
+    this.schoolValues = this.file.getValuesFromRecordString(record);
     //System.out.println("THE RECORD = "+record);
     
 		boolean success = storeCheck();
   
-    schoolValues = null;
+    this.schoolValues = null;
 
     return success;
   }
@@ -156,7 +158,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
   public void printFailedRecords(){
   	System.out.println("Import failed for these records, please fix and import again:");
   
-  	Iterator iter = failedRecords.iterator();
+  	Iterator iter = this.failedRecords.iterator();
   	while (iter.hasNext()) {
 		System.out.println((String) iter.next());
 	}
@@ -169,8 +171,10 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
     
 
 //variables
-		String childPin = getProperty(COLUMN_CHILDS_PIN);
-		if(childPin==null) return false;
+		String childPin = getProperty(this.COLUMN_CHILDS_PIN);
+		if(childPin==null) {
+			return false;
+		}
 		
 		//String schoolName = getProperty(COLUMN_SCHOOL_NAME);
     //String schoolType = getProperty(COLUMN_SCHOOL_TYPE);
@@ -195,7 +199,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
 		*/
 		
 		try{
-			user = comBiz.getUserHome().findByPersonalID(childPin);
+			user = this.comBiz.getUserHome().findByPersonalID(childPin);
 		}
 		catch (FinderException e) {
 			System.out.println("(NackaCheckImporter) User not found! "+childPin);	
@@ -211,7 +215,7 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
 		}*/
 		
 		try {
-			checkBiz.createGrantedCheck(user);
+			this.checkBiz.createGrantedCheck(user);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -232,18 +236,24 @@ public class NackaCheckImportFileHandlerBean extends IBOServiceBean implements N
 	private String getProperty(int columnIndex){
 		String value = null;
 		
-		if( schoolValues!=null ){
+		if( this.schoolValues!=null ){
 		
 			try {
-				value = (String)schoolValues.get(columnIndex);
+				value = (String)this.schoolValues.get(columnIndex);
 			} catch (RuntimeException e) {
 				return null;
 			}
 	 			//System.out.println("Index: "+columnIndex+" Value: "+value);
-	 		if( file.getEmptyValueString().equals( value ) ) return null;
-		 	else return value;
+	 		if( this.file.getEmptyValueString().equals( value ) ) {
+				return null;
+			}
+			else {
+				return value;
+			}
   		}
-  		else return null;
+		else {
+			return null;
+		}
   }
 
 
@@ -258,7 +268,7 @@ public void setRootGroup(Group rootGroup) {
  * @see com.idega.block.importer.business.ImportFileHandler#getFailedRecords()
  */
 public List getFailedRecords(){
-	return failedRecords;	
+	return this.failedRecords;	
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.17 2004/10/14 10:53:12 thomas Exp $
+ * $Id: NackaCohabitantImportFileHandlerBean.java,v 1.18 2006/04/09 11:47:51 laddi Exp $
  *
  * Copyright (C) 2003 Agura IT. All Rights Reserved.
  *
@@ -55,10 +55,10 @@ import com.idega.util.Timer;
  * Note that the "12" value in the SQL might have to be adjusted in the sql, 
  * depending on the number of records already inserted in the table. </p>
  * <p>
- * Last modified: $Date: 2004/10/14 10:53:12 $ by $Author: thomas $
+ * Last modified: $Date: 2006/04/09 11:47:51 $ by $Author: laddi $
  *
  * @author Anders Lindman
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  */
 public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean implements NackaCohabitantImportFileHandler, ImportFileHandler {
 
@@ -91,33 +91,33 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 	 * @see com.idega.block.importer.business.ImportFileHandler#handleRecords() 
 	 */
 	public boolean handleRecords(){
-		failedRecords = new ArrayList();
-		errorLog = new TreeMap();
+		this.failedRecords = new ArrayList();
+		this.errorLog = new TreeMap();
 		
-		transaction = this.getSessionContext().getUserTransaction();
+		this.transaction = this.getSessionContext().getUserTransaction();
         
 		Timer clock = new Timer();
 		clock.start();
 
 		try {
 			// initialize business beans
-			communeUserBusiness = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
-			childCareBusiness = (ChildCareBusiness) this.getServiceInstance(ChildCareBusiness.class);
-			memberFamilyLogic = (FamilyLogic) this.getServiceInstance(FamilyLogic.class);
-			userInfoService = (UserInfoService) this.getServiceInstance(UserInfoService.class);
+			this.communeUserBusiness = (CommuneUserBusiness) this.getServiceInstance(CommuneUserBusiness.class);
+			this.childCareBusiness = (ChildCareBusiness) this.getServiceInstance(ChildCareBusiness.class);
+			this.memberFamilyLogic = (FamilyLogic) this.getServiceInstance(FamilyLogic.class);
+			this.userInfoService = (UserInfoService) this.getServiceInstance(UserInfoService.class);
             		
-			transaction.begin();
+			this.transaction.begin();
 
 			// iterate through the records and process them
 			String item;
 			int count = 0;
 			boolean failed = false;
 
-			while (!(item = (String) file.getNextRecord()).trim().equals("")) {
+			while (!(item = (String) this.file.getNextRecord()).trim().equals("")) {
 				count++;
 				
 				if(!processRecord(item, count)) {
-					failedRecords.add(item);
+					this.failedRecords.add(item);
 					failed = true;
 //					break;
 				} 
@@ -137,9 +137,9 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 
 			//success commit changes
 			if (!failed) {
-				transaction.commit();
+				this.transaction.commit();
 			} else {
-				transaction.rollback(); 
+				this.transaction.rollback(); 
 			}
 			
 			return !failed;
@@ -147,7 +147,7 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		} catch (Exception e) {
 			e.printStackTrace();
 			try {
-				transaction.rollback();
+				this.transaction.rollback();
 			} catch (SystemException e2) {
 				e2.printStackTrace();
 			}
@@ -165,9 +165,9 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 			return true;
 		}
 //		userValues = file.getValuesFromRecordString(record);
-		userValues = getValuesFromRecordString2(record);
+		this.userValues = getValuesFromRecordString2(record);
 		boolean success = storeUserInfo(count);
-		userValues = null;
+		this.userValues = null;
 				
 		return success;
 	}
@@ -185,23 +185,23 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 	public void printFailedRecords() {
 		System.out.println("--------------------------------------------\n");
 		
-		if (failedRecords.isEmpty()) {
+		if (this.failedRecords.isEmpty()) {
 			System.out.println("All records imported successfully.");
 		} else {
 			System.out.println("Import failed for these records, please fix and import again:\n");
 		}
-		Iterator iter = failedRecords.iterator();
+		Iterator iter = this.failedRecords.iterator();
 		while (iter.hasNext()) {
 			System.out.println((String) iter.next());
 		}
 		
-		if (!errorLog.isEmpty()) {
+		if (!this.errorLog.isEmpty()) {
 			System.out.println("\nErrors during import:\n");
 		}
-		Iterator rowIter = errorLog.keySet().iterator();
+		Iterator rowIter = this.errorLog.keySet().iterator();
 		while (rowIter.hasNext()) {
 			Integer row = (Integer) rowIter.next();
-			String message = (String) errorLog.get(row);
+			String message = (String) this.errorLog.get(row);
 			System.out.println("Line " + row + ": " + message);
 		}
 		
@@ -219,7 +219,7 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 
 		String registerLeaderPersonalId = getUserProperty(COLUMN_REGISTER_LEADER_PERSONAL_ID);
 		if (registerLeaderPersonalId == null) {
-			errorLog.put(row, "Register leader personal ID cannot be empty.");
+			this.errorLog.put(row, "Register leader personal ID cannot be empty.");
 			return false;
 		}
 
@@ -243,13 +243,13 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		
 		// users
 		try {
-			registerLeader = communeUserBusiness.getUserHome().findByPersonalID(registerLeaderPersonalId);
+			registerLeader = this.communeUserBusiness.getUserHome().findByPersonalID(registerLeaderPersonalId);
 		} catch (FinderException e) {
-			errorLog.put(row, "Citizen not found for personal ID: " + registerLeaderPersonalId);
+			this.errorLog.put(row, "Citizen not found for personal ID: " + registerLeaderPersonalId);
 			return false;
 		}
 		try {
-			cohabitant = communeUserBusiness.getUserHome().findByPersonalID(cohabitantPersonalId);
+			cohabitant = this.communeUserBusiness.getUserHome().findByPersonalID(cohabitantPersonalId);
 		} catch (FinderException e) {
 //			errorLog.put(row, "Citizen not found for personal ID: " + cohabitantPersonalId);
 //			return false;
@@ -260,12 +260,12 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		Integer creatorId = null;
 		Integer registerLeaderId = (Integer) registerLeader.getPrimaryKey();
 		if (registerLeaderIncome != null) {
-			userInfoService.createBruttoIncome(registerLeaderId, registerLeaderIncome, validFrom, creatorId);			
+			this.userInfoService.createBruttoIncome(registerLeaderId, registerLeaderIncome, validFrom, creatorId);			
 		}
 		if (cohabitant != null) {
 			Integer cohabitantId = (Integer) cohabitant.getPrimaryKey();
 			if (cohabitantIncome != null) {
-				userInfoService.createBruttoIncome(cohabitantId, cohabitantIncome, validFrom, creatorId);
+				this.userInfoService.createBruttoIncome(cohabitantId, cohabitantIncome, validFrom, creatorId);
 			}
 		}
 		
@@ -275,16 +275,16 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		// cohabitant/spouse relation
 		User spouse = null;
 		try {
-			spouse = memberFamilyLogic.getSpouseFor(registerLeader);
+			spouse = this.memberFamilyLogic.getSpouseFor(registerLeader);
 		} catch (NoSpouseFound e) {}
 		if (cohabitant != null) {
 			try {
 				if (spouse != null && spouse.getPrimaryKey().equals(cohabitant.getPrimaryKey())) {
 					try {
-						User oldCohabitant = memberFamilyLogic.getCohabitantFor(registerLeader);
+						User oldCohabitant = this.memberFamilyLogic.getCohabitantFor(registerLeader);
 						if (oldCohabitant != null && oldCohabitant.getPrimaryKey().equals(cohabitant.getPrimaryKey())) {
 							try {
-								memberFamilyLogic.removeAsCohabitantFor(registerLeader, cohabitant);
+								this.memberFamilyLogic.removeAsCohabitantFor(registerLeader, cohabitant);
 							} catch (RemoveException e) {
 								log(e);
 							}
@@ -294,10 +294,10 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 					}
 				}
 				if (spouse == null || !spouse.getPrimaryKey().equals(cohabitant.getPrimaryKey())) {
-					memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);									
+					this.memberFamilyLogic.setAsCohabitantFor(registerLeader, cohabitant);									
 				}
 			} catch (CreateException e) {
-				errorLog.put(row, "Cannot create cohabitant relationship for personal Ids: " + registerLeaderPersonalId + ", " + cohabitantPersonalId);
+				this.errorLog.put(row, "Cannot create cohabitant relationship for personal Ids: " + registerLeaderPersonalId + ", " + cohabitantPersonalId);
 				return false;
 			}
 		}
@@ -307,14 +307,14 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		Collection cohabitantChildren = null;
 		Collection children = new ArrayList();
 		try {
-			registerLeaderChildren = memberFamilyLogic.getChildrenFor(registerLeader);
+			registerLeaderChildren = this.memberFamilyLogic.getChildrenFor(registerLeader);
 			if (registerLeaderChildren != null) {
 				children.addAll(registerLeaderChildren);
 			}
 		} catch (Exception e) {}
 		try {
 			if (spouse != null) {
-				spouseChildren = memberFamilyLogic.getChildrenFor(spouse);
+				spouseChildren = this.memberFamilyLogic.getChildrenFor(spouse);
 			}
 			if (spouseChildren != null) {
 				children.addAll(spouseChildren);
@@ -322,27 +322,27 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 		} catch (Exception e) {}
 		try {
 			if (cohabitant != null) {
-				cohabitantChildren = memberFamilyLogic.getChildrenFor(cohabitant);				
+				cohabitantChildren = this.memberFamilyLogic.getChildrenFor(cohabitant);				
 			}
 			if (cohabitantChildren != null) {
 				children.addAll(cohabitantChildren);
 			}
 		} catch (Exception e) {}
 				
-		Address registerLeaderAddress = communeUserBusiness.getUsersMainAddress(registerLeader);
+		Address registerLeaderAddress = this.communeUserBusiness.getUsersMainAddress(registerLeader);
 		Iterator iter = children.iterator();
 		while (iter.hasNext()) {
 			User child = (User) iter.next();
 			int childId = ((Integer) child.getPrimaryKey()).intValue();
-			Address childAddress = communeUserBusiness.getUsersMainAddress(childId);
+			Address childAddress = this.communeUserBusiness.getUsersMainAddress(childId);
 			boolean addressMatch = false;
 			try {
-				addressMatch = communeUserBusiness.getIfUserAddressesMatch(registerLeaderAddress, childAddress);
+				addressMatch = this.communeUserBusiness.getIfUserAddressesMatch(registerLeaderAddress, childAddress);
 			} catch (Exception e) {}
 			if (!addressMatch) {
 				continue;
 			}
-			Collection contracts = childCareBusiness.getContractsByChild(childId);
+			Collection contracts = this.childCareBusiness.getContractsByChild(childId);
 			Iterator iter2 = contracts.iterator();
 			while (iter2.hasNext()) {
 				ChildCareContract contract = (ChildCareContract) iter2.next();
@@ -360,13 +360,13 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 	private String getUserProperty(int columnIndex){
 		String value = null;
 		
-		if (userValues!=null) {
+		if (this.userValues!=null) {
 			try {
-				value = (String) userValues.get(columnIndex);
+				value = (String) this.userValues.get(columnIndex);
 			} catch (RuntimeException e) {
 				return null;
 			}
-	 		if (file.getEmptyValueString().equals(value)) {
+	 		if (this.file.getEmptyValueString().equals(value)) {
 	 			return null;
 	 		} else {
 	 			return value;
@@ -394,6 +394,6 @@ public class NackaCohabitantImportFileHandlerBean extends IBOServiceBean impleme
 	 * @see com.idega.block.importer.business.ImportFileHandler#getFailedRecords()
 	 */
 	public List getFailedRecords(){
-		return failedRecords;	
+		return this.failedRecords;	
 	}
 }

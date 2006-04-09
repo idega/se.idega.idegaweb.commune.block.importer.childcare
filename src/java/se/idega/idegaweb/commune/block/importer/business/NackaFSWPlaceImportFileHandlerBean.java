@@ -17,6 +17,6 @@ public class NackaFSWPlaceImportFileHandlerBean extends NackaQueueImportFileHand
 {
 	public NackaFSWPlaceImportFileHandlerBean() {
 		super();
-		queueType = FS_WITH_PLACE;
+		this.queueType = this.FS_WITH_PLACE;
 	}
 }
