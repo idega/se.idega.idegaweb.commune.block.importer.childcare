@@ -15,6 +15,7 @@
     <project>se.idega.idegaweb.commune.care</project>
     <project>se.idega.idegaweb.commune.childcare</project>
     <project>se.idega.idegaweb.commune.accounting</project>
+    <project>com.idega.block.web2.0</project>
   </projects>
   <buildSpec>
     <buildCommand>
